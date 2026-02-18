@@ -1,0 +1,32 @@
+# Maturin build config for Rust-accelerated builds
+#
+# Usage:
+#   maturin develop --release -m pyproject-maturin.toml
+#   maturin build --release -m pyproject-maturin.toml
+#
+# This is separate from pyproject.toml to allow Python-only installation
+# via standard pip install without requiring Rust toolchain.
+
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pmtvs"
+version = "0.1.0"
+description = "High-performance primitives for time series and dynamical systems analysis"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Avery Rudder", email = "avery@rudder.io"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "pmtvs._rust"
