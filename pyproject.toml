@@ -1,56 +1,39 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "pmtvs"
 version = "0.1.0"
-description = "High-performance primitives for time series and dynamical systems analysis"
+description = "Rust-accelerated signal analysis primitives"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-    {name = "pmtvs contributors", email = "jason.rudder@protonmail.com"}
+    { name = "Jason Rudder" },
+    { name = "Avery Rudder" },
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.21"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
     "Programming Language :: Rust",
     "Topic :: Scientific/Engineering",
     "Topic :: Scientific/Engineering :: Mathematics",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-keywords = ["time-series", "dynamical-systems", "signal-processing", "entropy", "chaos"]
-dependencies = [
-    "numpy>=1.24",
-    "scipy>=1.10",
-]
 
 [project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-benchmark>=4.0",
-    "maturin>=1.4",
-]
-full = [
-    "scikit-learn>=1.2",
-    "statsmodels>=0.14",
-    "giotto-tda>=0.6",
-    "networkx>=3.0",
-]
+scipy = ["scipy>=1.7"]
+full = ["scipy>=1.7", "statsmodels>=0.13"]
+dev = ["pytest>=7.0", "scipy>=1.7", "statsmodels>=0.13", "maturin>=1.4"]
 
 [project.urls]
-Homepage = "https://github.com/pmtvs/pmtvs"
-Repository = "https://github.com/pmtvs/pmtvs"
+Repository = "https://github.com/jasonrudder/pmtvs"
 
-[tool.setuptools.packages.find]
-where = ["python"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-v --tb=short"
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "python"
+module-name = "pmtvs._rust"

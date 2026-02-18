@@ -2,20 +2,15 @@
 name = "pmtvs"
 version = "0.1.0"
 edition = "2021"
-license = "MIT"
-description = "Rust accelerators for pmtvs primitives"
 
 [lib]
 name = "_rust"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.20", features = ["extension-module"] }
-numpy = "0.20"
-ndarray = "0.15"
-rayon = "1.8"
+pyo3 = { version = "0.21", features = ["extension-module"] }
+numpy = "0.21"
 
 [profile.release]
-lto = true
-codegen-units = 1
 opt-level = 3
+lto = true

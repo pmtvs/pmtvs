@@ -9,16 +9,16 @@ import numpy as np
 from typing import Optional
 from math import factorial
 
-from pmtvs._dispatch import dispatch
+from pmtvs._dispatch import use_rust
 
 
-def _sample_entropy_py(
+def sample_entropy(
     signal: np.ndarray,
     m: int = 2,
     r: Optional[float] = None
 ) -> float:
     """
-    Compute sample entropy (Python implementation).
+    Compute sample entropy.
 
     Parameters
     ----------
@@ -34,6 +34,16 @@ def _sample_entropy_py(
     float
         Sample entropy (higher = more complex/random)
     """
+    # Check for Rust backend
+    if use_rust('sample_entropy'):
+        from pmtvs import _get_rust
+        rust_fn = _get_rust('sample_entropy')
+        if rust_fn is not None:
+            if r is None:
+                r = 0.2 * np.std(signal)
+            return rust_fn(signal, m, r)
+
+    # Python implementation
     signal = np.asarray(signal).flatten()
     n = len(signal)
 
@@ -62,14 +72,14 @@ def _sample_entropy_py(
     return -np.log(A / B) if A > 0 else np.nan
 
 
-def _permutation_entropy_py(
+def permutation_entropy(
     signal: np.ndarray,
     order: int = 3,
     delay: int = 1,
     normalize: bool = True
 ) -> float:
     """
-    Compute permutation entropy (Python implementation).
+    Compute permutation entropy.
 
     Parameters
     ----------
@@ -120,13 +130,13 @@ def _permutation_entropy_py(
     return float(entropy)
 
 
-def _approximate_entropy_py(
+def approximate_entropy(
     signal: np.ndarray,
     m: int = 2,
     r: Optional[float] = None
 ) -> float:
     """
-    Compute approximate entropy (Python implementation).
+    Compute approximate entropy.
 
     Parameters
     ----------
@@ -165,9 +175,3 @@ def _approximate_entropy_py(
         return np.mean(np.log(C))
 
     return float(phi(m) - phi(m + 1))
-
-
-# Dispatch wrappers
-sample_entropy = dispatch("sample_entropy", _sample_entropy_py)
-permutation_entropy = dispatch("permutation_entropy", _permutation_entropy_py)
-approximate_entropy = dispatch("approximate_entropy", _approximate_entropy_py)

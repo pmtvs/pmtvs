@@ -8,7 +8,7 @@ These measure long-range dependence in time series.
 import numpy as np
 from typing import Optional, Tuple
 
-from pmtvs._dispatch import dispatch
+from pmtvs._dispatch import use_rust
 
 
 # Default configuration constants
@@ -22,12 +22,12 @@ DEFAULT_DFA_N_SCALES = 20
 DEFAULT_MIN_SAMPLES_DFA = 64
 
 
-def _hurst_exponent_py(
+def hurst_exponent(
     signal: np.ndarray,
     method: str = 'rs'
 ) -> float:
     """
-    Compute Hurst exponent (Python implementation).
+    Compute Hurst exponent.
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def _hurst_exponent_py(
         return np.nan
 
     if method == 'dfa':
-        return _dfa_py(signal)
+        return dfa(signal)
 
     # Rescaled Range (R/S) method
     max_k = min(int(n * DEFAULT_RS_MAX_K_RATIO), DEFAULT_RS_MAX_K_CAP)
@@ -91,13 +91,13 @@ def _hurst_exponent_py(
     return float(np.clip(H, 0, 1))
 
 
-def _dfa_py(
+def dfa(
     signal: np.ndarray,
     scale_range: Optional[Tuple[int, int]] = None,
     order: int = 1
 ) -> float:
     """
-    Compute Detrended Fluctuation Analysis (Python implementation).
+    Compute Detrended Fluctuation Analysis.
 
     Parameters
     ----------
@@ -171,7 +171,7 @@ def _dfa_py(
     return float(alpha)
 
 
-def _hurst_r2_py(signal: np.ndarray) -> float:
+def hurst_r2(signal: np.ndarray) -> float:
     """
     Compute R-squared of Hurst exponent fit.
 
@@ -228,11 +228,3 @@ def _hurst_r2_py(signal: np.ndarray) -> float:
         return np.nan
 
     return float(1 - ss_res / ss_tot)
-
-
-# Dispatch wrappers
-hurst_exponent = dispatch("hurst_exponent", _hurst_exponent_py)
-dfa = dispatch("dfa", _dfa_py)
-
-# No Rust dispatch for hurst_r2 (not in RUST_VALIDATED)
-hurst_r2 = _hurst_r2_py
