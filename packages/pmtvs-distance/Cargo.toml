@@ -1,5 +1,5 @@
 [package]
-name = "pmtvs-distance"
+name = "pmtvs_distance"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,6 +8,10 @@ name = "_rust"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
-numpy = "0.22"
-shared = { path = "../../shared" }
+pyo3 = { version = "0.21", features = ["extension-module"] }
+numpy = "0.21"
+pmtvs_shared = { path = "../../shared" }
+
+[profile.release]
+opt-level = 3
+lto = true

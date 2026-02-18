@@ -34,8 +34,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rudderlabs/pmtvs"
-Repository = "https://github.com/rudderlabs/pmtvs"
+Homepage = "https://github.com/pmtvs/pmtvs"
+Repository = "https://github.com/pmtvs/pmtvs"
 
 [tool.setuptools.packages.find]
 where = ["python"]
