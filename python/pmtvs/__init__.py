@@ -34,12 +34,26 @@ __version__ = "0.1.0"
 BACKEND = get_backend()
 RUST_AVAILABLE = is_rust_available()
 
-# Submodule imports will be added as functions are ported in subsequent PRs
-# Example (after PR 1):
-# from pmtvs.individual import (
-#     mean, std, variance, skewness, kurtosis,
-#     derivative, integral, curvature,
-# )
+# Individual primitives (PR 1: stats + calculus)
+from pmtvs.individual import (
+    # Statistics
+    mean,
+    std,
+    variance,
+    min_max,
+    percentiles,
+    skewness,
+    kurtosis,
+    rms,
+    peak_to_peak,
+    crest_factor,
+    zero_crossings,
+    mean_crossings,
+    # Calculus
+    derivative,
+    integral,
+    curvature,
+)
 
 __all__ = [
     "__version__",
@@ -47,4 +61,21 @@ __all__ = [
     "RUST_AVAILABLE",
     "get_backend",
     "is_rust_available",
+    # Statistics
+    'mean',
+    'std',
+    'variance',
+    'min_max',
+    'percentiles',
+    'skewness',
+    'kurtosis',
+    'rms',
+    'peak_to_peak',
+    'crest_factor',
+    'zero_crossings',
+    'mean_crossings',
+    # Calculus
+    'derivative',
+    'integral',
+    'curvature',
 ]
