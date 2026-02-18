@@ -1,0 +1,8 @@
+[package]
+name = "pmtvs_shared"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+numpy = "0.21"
+pyo3 = { version = "0.21", features = ["extension-module"] }

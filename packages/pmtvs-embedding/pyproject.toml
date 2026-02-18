@@ -1,0 +1,48 @@
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pmtvs-embedding"
+version = "0.1.0"
+description = "Time-delay embedding for dynamical systems analysis (4 functions, 1 Rust-accelerated)"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Jason Rudder"},
+    {name = "Avery Rudder"},
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "numpy>=1.20",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-benchmark>=4.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/rudderlabs/pmtvs"
+Repository = "https://github.com/rudderlabs/pmtvs"
+
+[tool.maturin]
+python-source = "python"
+module-name = "pmtvs_embedding._rust"
+features = ["pyo3/extension-module"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
