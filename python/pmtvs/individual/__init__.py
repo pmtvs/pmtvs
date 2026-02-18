@@ -25,6 +25,18 @@ from .calculus import (
     curvature,
 )
 
+from .entropy import (
+    sample_entropy,
+    permutation_entropy,
+    approximate_entropy,
+)
+
+from .fractal import (
+    hurst_exponent,
+    dfa,
+    hurst_r2,
+)
+
 __all__ = [
     # Statistics
     'mean',
@@ -43,4 +55,12 @@ __all__ = [
     'derivative',
     'integral',
     'curvature',
+    # Entropy
+    'sample_entropy',
+    'permutation_entropy',
+    'approximate_entropy',
+    # Fractal
+    'hurst_exponent',
+    'dfa',
+    'hurst_r2',
 ]

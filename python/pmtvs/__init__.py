@@ -34,7 +34,7 @@ __version__ = "0.1.0"
 BACKEND = get_backend()
 RUST_AVAILABLE = is_rust_available()
 
-# Individual primitives (PR 1: stats + calculus)
+# Individual primitives
 from pmtvs.individual import (
     # Statistics
     mean,
@@ -53,6 +53,14 @@ from pmtvs.individual import (
     derivative,
     integral,
     curvature,
+    # Entropy
+    sample_entropy,
+    permutation_entropy,
+    approximate_entropy,
+    # Fractal
+    hurst_exponent,
+    dfa,
+    hurst_r2,
 )
 
 __all__ = [
@@ -78,4 +86,12 @@ __all__ = [
     'derivative',
     'integral',
     'curvature',
+    # Entropy
+    'sample_entropy',
+    'permutation_entropy',
+    'approximate_entropy',
+    # Fractal
+    'hurst_exponent',
+    'dfa',
+    'hurst_r2',
 ]
