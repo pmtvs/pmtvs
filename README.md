@@ -95,4 +95,4 @@ pytest tests/ -v
 
 ## License
 
-MIT License. Copyright (c) 2025 Jason Rudder, Avery Rudder.
+MIT License. Copyright (c) 2025 pmtvs contributors.
