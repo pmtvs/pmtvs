@@ -7,7 +7,7 @@
 
 ## Overview
 
-pmtvs is a standalone library of ~200 numerical primitives extracted from the Rudder Framework. It provides:
+pmtvs is a standalone library of ~200 numerical primitives for time series and dynamical systems analysis. It provides:
 
 - **Statistics**: mean, std, variance, skewness, kurtosis, percentiles, RMS, crest factor
 - **Calculus**: derivatives, integrals, curvature
@@ -86,7 +86,7 @@ The following functions dispatch to Rust when available:
 
 ```bash
 # Clone and setup
-git clone https://github.com/rudder-io/pmtvs.git
+git clone https://github.com/pmtvs/pmtvs.git
 cd pmtvs
 
 # Python-only development
@@ -109,4 +109,4 @@ MIT License - see [LICENSE.md](LICENSE.md)
 
 ## Credits
 
-- **Avery Rudder** - Core architecture and algorithms
+- pmtvs contributors

@@ -9,7 +9,7 @@ description = "High-performance primitives for time series and dynamical systems
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Avery Rudder", email = "avery@rudder.io"}
+    {name = "pmtvs contributors", email = "jason.rudder@protonmail.com"}
 ]
 requires-python = ">=3.10"
 classifiers = [
@@ -45,8 +45,8 @@ full = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/rudder-io/pmtvs"
-Repository = "https://github.com/rudder-io/pmtvs"
+Homepage = "https://github.com/pmtvs/pmtvs"
+Repository = "https://github.com/pmtvs/pmtvs"
 
 [tool.setuptools.packages.find]
 where = ["python"]
