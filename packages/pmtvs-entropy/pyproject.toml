@@ -7,7 +7,7 @@ name = "pmtvs-entropy"
 version = "0.1.0"
 description = "Entropy primitives: sample entropy, permutation entropy"
 license = { text = "MIT" }
-authors = [{ name = "Jason Rudder" }, { name = "Avery Rudder" }]
+authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.21"]
 

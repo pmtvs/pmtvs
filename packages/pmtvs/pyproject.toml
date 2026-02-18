@@ -7,7 +7,7 @@ name = "pmtvs"
 version = "0.1.0"
 description = "Rust-accelerated signal analysis primitives"
 license = { text = "MIT" }
-authors = [{ name = "Jason Rudder" }, { name = "Avery Rudder" }]
+authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = [
     "pmtvs-entropy>=0.1.0",
