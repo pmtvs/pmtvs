@@ -13,12 +13,12 @@ fn delay_embedding<'py>(
     let n = signal.len();
 
     if dim < 1 || tau < 1 {
-        return Ok(PyArray2::from_vec2(py, &[vec![f64::NAN]]).unwrap());
+        return Ok(PyArray2::from_vec2_bound(py, &[vec![f64::NAN]]).unwrap());
     }
 
     let n_vectors = n.saturating_sub((dim - 1) * tau);
     if n_vectors < 1 {
-        return Ok(PyArray2::from_vec2(py, &[vec![f64::NAN]]).unwrap());
+        return Ok(PyArray2::from_vec2_bound(py, &[vec![f64::NAN]]).unwrap());
     }
 
     // Build embedding matrix
@@ -31,7 +31,7 @@ fn delay_embedding<'py>(
         embedding.push(row);
     }
 
-    Ok(PyArray2::from_vec2(py, &embedding).unwrap())
+    Ok(PyArray2::from_vec2_bound(py, &embedding).unwrap())
 }
 
 #[pymodule]
