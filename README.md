@@ -24,8 +24,10 @@ pip install pmtvs-statistics
 ```python
 import numpy as np
 from pmtvs_entropy import sample_entropy, permutation_entropy
-from pmtvs_fractal import hurst_exponent, dfa
-from pmtvs_statistics import mean, std, skewness
+from pmtvs_fractal import hurst_exponent, dfa, rescaled_range
+from pmtvs_statistics import mean, std, skewness, first_derivative
+from pmtvs_information import mutual_information, granger_causality
+from pmtvs_regression import linear_regression
 
 # Generate sample signal
 signal = np.random.randn(1000)
@@ -37,11 +39,16 @@ pe = permutation_entropy(signal)
 # Fractal analysis
 h = hurst_exponent(signal)
 alpha = dfa(signal)
+rs = rescaled_range(signal)
 
 # Basic statistics
 m = mean(signal)
 s = std(signal)
 sk = skewness(signal)
+dx = first_derivative(signal)
+
+# Pairwise analysis
+slope, intercept, r2, se = linear_regression(signal[:500], signal[500:])
 ```
 
 ## Packages
@@ -49,18 +56,19 @@ sk = skewness(signal)
 | Package | Functions | Rust | Description |
 |---------|-----------|------|-------------|
 | pmtvs-entropy | 3 | 2 | Sample entropy, permutation entropy |
-| pmtvs-fractal | 3 | 3 | Hurst exponent, DFA |
-| pmtvs-statistics | 17 | 14 | Statistics and calculus |
-| pmtvs-correlation | 11 | 4 | Correlation, autocorrelation |
-| pmtvs-distance | 4 | 3 | Distance metrics |
+| pmtvs-fractal | 7 | 3 | Hurst exponent, DFA, rescaled range, long-range correlation |
+| pmtvs-statistics | 38 | 14 | Statistics, calculus, derivatives, normalization |
+| pmtvs-correlation | 15 | 4 | Correlation, autocorrelation, Spearman, Kendall |
+| pmtvs-distance | 6 | 3 | Distance metrics, Earth mover's, cosine similarity |
 | pmtvs-embedding | 4 | 1 | Time delay embedding |
-| pmtvs-dynamics | 17 | 0 | Lyapunov, FTLE, RQA |
-| pmtvs-spectral | 12 | 0 | FFT, PSD, wavelets |
-| pmtvs-matrix | 10 | 0 | SVD, covariance |
+| pmtvs-dynamics | 46 | 0 | Lyapunov, FTLE, RQA, saddle points, sensitivity |
+| pmtvs-spectral | 9 | 0 | FFT, PSD, wavelets |
+| pmtvs-matrix | 22 | 0 | SVD, covariance, DMD, geometry |
 | pmtvs-topology | 6 | 0 | Persistent homology |
-| pmtvs-network | 14 | 0 | Graph analysis |
-| pmtvs-information | 13 | 0 | Information theory |
-| pmtvs-tests | 18 | 0 | Statistical tests |
+| pmtvs-network | 10 | 0 | Graph analysis, community detection |
+| pmtvs-information | 25 | 0 | Information theory, causality, decomposition |
+| pmtvs-tests | 27 | 0 | Statistical & hypothesis tests, stationarity |
+| pmtvs-regression | 5 | 0 | Linear regression, signal arithmetic |
 
 ## Rust Acceleration
 

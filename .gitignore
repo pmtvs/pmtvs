@@ -80,6 +80,12 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints
 
+# Claude Code
+.claude/
+
+# Scripts (local utilities)
+scripts/
+
 # Project specific
 *.parquet
 *.csv
