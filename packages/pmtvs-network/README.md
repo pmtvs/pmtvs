@@ -32,7 +32,7 @@ Pure Python implementation.
 
 ## License
 
-PolyForm Noncommercial 1.0.0 with Additional Terms.
+PolyForm Strict 1.0.0 with Additional Terms.
 
 - **Students & individual researchers:** Free. Cite us.
 - **Funded research labs (grants > $100K):** Academic Research License required. [Contact us](mailto:licensing@pmtvs.dev).

@@ -5,7 +5,7 @@ Rust-accelerated signal analysis primitives.
 **numpy in, number out.**
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm%20NC-blue.svg)](LICENSE)
+[![License: PolyForm Strict](https://img.shields.io/badge/License-PolyForm%20Strict-blue.svg)](LICENSE)
 
 ## Installation
 
@@ -107,7 +107,7 @@ The most useful bug report includes three things: a minimal code example that re
 
 ## License
 
-PolyForm Noncommercial 1.0.0 with Additional Terms.
+PolyForm Strict 1.0.0 with Additional Terms.
 
 - **Students & individual researchers:** Free. Cite us.
 - **Funded research labs (grants > $100K):** Academic Research License required. [Contact us](mailto:licensing@pmtvs.dev).

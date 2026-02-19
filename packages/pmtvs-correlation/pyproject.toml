@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "pmtvs-correlation"
 version = "0.2.0"
 description = "Correlation primitives: autocorrelation, cross-correlation, coherence"
-license = {text = "PolyForm-Noncommercial-1.0.0"}
+license = {text = "PolyForm-Strict-1.0.0"}
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.21"]

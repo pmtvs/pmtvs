@@ -7,7 +7,7 @@ name = "pmtvs-embedding"
 version = "0.2.0"
 description = "Time-delay embedding for dynamical systems analysis (4 functions, 1 Rust-accelerated)"
 readme = "README.md"
-license = {text = "PolyForm-Noncommercial-1.0.0"}
+license = {text = "PolyForm-Strict-1.0.0"}
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 classifiers = [
