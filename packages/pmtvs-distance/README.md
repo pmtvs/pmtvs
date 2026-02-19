@@ -21,3 +21,13 @@ pip install pmtvs-distance
 
 3 of 6 functions have Rust implementations (~8x speedup).
 Disable with `PMTVS_USE_RUST=0`.
+
+## License
+
+PolyForm Noncommercial 1.0.0 with Additional Terms.
+
+- **Students & individual researchers:** Free. Cite us.
+- **Funded research labs (grants > $100K):** Academic Research License required. [Contact us](mailto:licensing@pmtvs.dev).
+- **Commercial use:** Commercial License required. [Contact us](mailto:licensing@pmtvs.dev).
+
+See [LICENSE](LICENSE) for full terms.

@@ -19,3 +19,13 @@ pip install pmtvs-regression
 ## Backend
 
 Pure Python implementation.
+
+## License
+
+PolyForm Noncommercial 1.0.0 with Additional Terms.
+
+- **Students & individual researchers:** Free. Cite us.
+- **Funded research labs (grants > $100K):** Academic Research License required. [Contact us](mailto:licensing@pmtvs.dev).
+- **Commercial use:** Commercial License required. [Contact us](mailto:licensing@pmtvs.dev).
+
+See [LICENSE](LICENSE) for full terms.
