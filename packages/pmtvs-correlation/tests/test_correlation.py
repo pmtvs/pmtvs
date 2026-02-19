@@ -5,12 +5,16 @@ import pytest
 from pmtvs_correlation import (
     autocorrelation,
     partial_autocorrelation,
+    autocorrelation_function,
+    acf_decay_time,
     correlation,
     covariance,
     cross_correlation,
     lag_at_max_xcorr,
     partial_correlation,
     coherence,
+    spearman_correlation,
+    kendall_tau,
 )
 
 
@@ -199,3 +203,163 @@ class TestCoherence:
         freqs, coh = coherence(x, y, nperseg=64)
         assert np.all(coh >= 0)
         assert np.all(coh <= 1)
+
+
+class TestSpearmanCorrelation:
+    """Tests for Spearman rank correlation."""
+
+    def test_perfect_monotonic(self):
+        """Monotonically increasing relationship should have rho = 1."""
+        np.random.seed(42)
+        x = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y = np.array([2.0, 4.0, 8.0, 16.0, 32.0])  # monotonically increasing
+        rho = spearman_correlation(x, y)
+        assert rho == pytest.approx(1.0)
+
+    def test_perfect_negative_monotonic(self):
+        """Monotonically decreasing relationship should have rho = -1."""
+        np.random.seed(42)
+        x = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y = np.array([5.0, 4.0, 3.0, 2.0, 1.0])
+        rho = spearman_correlation(x, y)
+        assert rho == pytest.approx(-1.0)
+
+    def test_uncorrelated(self):
+        """Independent random signals should have low Spearman correlation."""
+        np.random.seed(42)
+        x = np.random.randn(1000)
+        y = np.random.randn(1000)
+        rho = spearman_correlation(x, y)
+        assert abs(rho) < 0.1
+
+    def test_short_signal_returns_nan(self):
+        """Too short signals should return NaN."""
+        x = np.array([1.0, 2.0])
+        y = np.array([3.0, 4.0])
+        assert np.isnan(spearman_correlation(x, y))
+
+    def test_different_lengths_returns_nan(self):
+        """Different length signals should return NaN."""
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([1.0, 2.0])
+        assert np.isnan(spearman_correlation(x, y))
+
+    def test_bounded(self):
+        """Spearman correlation should be in [-1, 1]."""
+        np.random.seed(42)
+        for _ in range(10):
+            x = np.random.randn(50)
+            y = np.random.randn(50)
+            rho = spearman_correlation(x, y)
+            assert -1.0 <= rho <= 1.0
+
+
+class TestKendallTau:
+    """Tests for Kendall's tau rank correlation."""
+
+    def test_perfect_concordance(self):
+        """Perfectly concordant pairs should give tau = 1."""
+        np.random.seed(42)
+        x = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y = np.array([10.0, 20.0, 30.0, 40.0, 50.0])
+        tau = kendall_tau(x, y)
+        assert tau == pytest.approx(1.0)
+
+    def test_perfect_discordance(self):
+        """Perfectly discordant pairs should give tau = -1."""
+        np.random.seed(42)
+        x = np.array([1.0, 2.0, 3.0, 4.0, 5.0])
+        y = np.array([50.0, 40.0, 30.0, 20.0, 10.0])
+        tau = kendall_tau(x, y)
+        assert tau == pytest.approx(-1.0)
+
+    def test_uncorrelated(self):
+        """Independent random signals should have low Kendall's tau."""
+        np.random.seed(42)
+        x = np.random.randn(500)
+        y = np.random.randn(500)
+        tau = kendall_tau(x, y)
+        assert abs(tau) < 0.1
+
+    def test_short_signal_returns_nan(self):
+        """Too short signals should return NaN."""
+        x = np.array([1.0, 2.0])
+        y = np.array([3.0, 4.0])
+        assert np.isnan(kendall_tau(x, y))
+
+    def test_different_lengths_returns_nan(self):
+        """Different length signals should return NaN."""
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([1.0, 2.0])
+        assert np.isnan(kendall_tau(x, y))
+
+    def test_bounded(self):
+        """Kendall's tau should be in [-1, 1]."""
+        np.random.seed(42)
+        for _ in range(10):
+            x = np.random.randn(50)
+            y = np.random.randn(50)
+            tau = kendall_tau(x, y)
+            assert -1.0 <= tau <= 1.0
+
+
+class TestAutocorrelationFunction:
+    """Tests for full ACF computation."""
+
+    def test_lag_zero_is_one(self):
+        """ACF at lag 0 should be 1."""
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        acf = autocorrelation_function(signal)
+        assert acf[0] == pytest.approx(1.0)
+
+    def test_white_noise_decays(self):
+        """White noise ACF should be near zero at non-zero lags."""
+        np.random.seed(42)
+        signal = np.random.randn(1000)
+        acf = autocorrelation_function(signal, max_lag=20)
+        # Non-zero lags should be small
+        assert np.all(np.abs(acf[1:]) < 0.1)
+
+    def test_returns_correct_length(self):
+        """ACF should return max_lag + 1 values."""
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        acf = autocorrelation_function(signal, max_lag=15)
+        assert len(acf) == 16
+
+    def test_short_signal(self):
+        """Short signal should return NaN array."""
+        signal = np.array([1.0, 2.0])
+        acf = autocorrelation_function(signal)
+        assert len(acf) == 1
+        assert np.isnan(acf[0])
+
+
+class TestACFDecayTime:
+    """Tests for ACF decay time."""
+
+    def test_white_noise_fast_decay(self):
+        """White noise should have fast ACF decay."""
+        np.random.seed(42)
+        signal = np.random.randn(500)
+        decay = acf_decay_time(signal)
+        # White noise decays quickly
+        assert decay < 5.0
+
+    def test_correlated_signal_slow_decay(self):
+        """Highly correlated signal should have slower ACF decay."""
+        np.random.seed(42)
+        # AR(1) with high persistence
+        n = 500
+        signal = np.zeros(n)
+        signal[0] = np.random.randn()
+        for i in range(1, n):
+            signal[i] = 0.95 * signal[i - 1] + 0.1 * np.random.randn()
+        decay = acf_decay_time(signal)
+        assert decay > 1.0
+
+    def test_short_signal(self):
+        """Short signal should return NaN."""
+        signal = np.array([1.0, 2.0])
+        assert np.isnan(acf_decay_time(signal))

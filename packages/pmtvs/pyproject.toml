@@ -23,6 +23,7 @@ dependencies = [
     "pmtvs-network>=0.1.0",
     "pmtvs-information>=0.1.0",
     "pmtvs-tests>=0.1.0",
+    "pmtvs-regression>=0.1.0",
 ]
 
 [tool.setuptools.packages.find]

@@ -248,3 +248,291 @@ def hurst_r2(signal: np.ndarray) -> float:
         return np.nan
 
     return float(1 - ss_res / ss_tot)
+
+
+# ---------------------------------------------------------------------------
+# Memory analysis functions
+# ---------------------------------------------------------------------------
+
+# Default configuration constants for memory analysis
+DEFAULT_MEMORY_MIN_SAMPLES = 20
+DEFAULT_MAX_LAG_RATIO = 0.25
+
+
+def detrended_fluctuation_analysis(
+    values: np.ndarray,
+    min_scale: int = 4,
+    max_scale: Optional[int] = None,
+    n_scales: int = 10,
+) -> Tuple[np.ndarray, np.ndarray, float]:
+    """
+    Perform detrended fluctuation analysis (full output version).
+
+    Unlike :func:`dfa` which returns only the scaling exponent, this function
+    returns the intermediate scales and fluctuation values as well.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Input time series.
+    min_scale : int
+        Minimum window scale (default 4).
+    max_scale : int, optional
+        Maximum window scale (default ``len(values) // 4``).
+    n_scales : int
+        Number of logarithmically-spaced scale points (default 10).
+
+    Returns
+    -------
+    tuple of (scales, fluctuations, alpha)
+        * **scales** — array of window sizes used.
+        * **fluctuations** — RMS fluctuation at each scale.
+        * **alpha** — DFA scaling exponent (related to Hurst: H ≈ alpha).
+          Returns 0.5 when the fit cannot be computed.
+    """
+    values = np.asarray(values).flatten()
+    values = values[~np.isnan(values)]
+    n = len(values)
+
+    if n < min_scale * 2:
+        return np.array([]), np.array([]), float(np.nan)
+
+    if max_scale is None:
+        max_scale = n // 4
+
+    if max_scale < min_scale:
+        return np.array([]), np.array([]), float(np.nan)
+
+    # Integration: cumulative sum of deviations from mean
+    y = np.cumsum(values - np.mean(values))
+
+    # Generate logarithmically-spaced scales
+    scales = np.unique(np.round(np.logspace(
+        np.log10(min_scale),
+        np.log10(max_scale),
+        n_scales,
+    ))).astype(int)
+    scales = scales[(scales >= min_scale) & (scales <= max_scale)]
+
+    fluctuations = []
+
+    for scale in scales:
+        n_segments = n // scale
+        if n_segments < 1:
+            fluctuations.append(np.nan)
+            continue
+
+        rms_list = []
+
+        for i in range(n_segments):
+            segment = y[i * scale:(i + 1) * scale]
+
+            # Linear detrend
+            x = np.arange(len(segment))
+            coeffs = np.polyfit(x, segment, 1)
+            trend = np.polyval(coeffs, x)
+
+            rms = np.sqrt(np.mean((segment - trend) ** 2))
+            rms_list.append(rms)
+
+        fluctuations.append(np.mean(rms_list))
+
+    fluctuations = np.array(fluctuations)
+
+    # Remove invalid values for fitting
+    valid = ~np.isnan(fluctuations) & (fluctuations > 0)
+    if np.sum(valid) < 2:
+        return scales, fluctuations, float(np.nan)
+
+    # Log-log fit to obtain alpha
+    log_scales = np.log(scales[valid])
+    log_fluct = np.log(fluctuations[valid])
+
+    alpha, _ = np.polyfit(log_scales, log_fluct, 1)
+
+    return scales, fluctuations, float(alpha)
+
+
+def rescaled_range(
+    values: np.ndarray,
+    segment_size: Optional[int] = None,
+) -> float:
+    """
+    Compute the rescaled range (R/S) statistic — Hurst exponent via R/S.
+
+    The R/S statistic is the ratio of the range of cumulative deviations from
+    the mean to the standard deviation of the series.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Input time series.
+    segment_size : int, optional
+        Number of samples to use (default: full length).
+
+    Returns
+    -------
+    float
+        R/S statistic.  Returns ``nan`` for degenerate inputs.
+    """
+    values = np.asarray(values).flatten()
+    values = values[~np.isnan(values)]
+    n = len(values)
+
+    if n < 2:
+        return float(np.nan)
+
+    if segment_size is None:
+        segment_size = n
+
+    segment_size = min(segment_size, n)
+
+    segment = values[:segment_size]
+
+    # Mean-adjusted cumulative sum
+    mean = np.mean(segment)
+    cumsum = np.cumsum(segment - mean)
+
+    # Range
+    R = np.max(cumsum) - np.min(cumsum)
+
+    # Standard deviation
+    S = np.std(segment, ddof=1)
+
+    if S == 0:
+        return float(np.nan)
+
+    return float(R / S)
+
+
+def long_range_correlation(
+    values: np.ndarray,
+    max_lag: Optional[int] = None,
+) -> Tuple[np.ndarray, float]:
+    """
+    Analyse long-range correlation via autocorrelation power-law decay.
+
+    Fits ``ACF(tau) ~ tau^(-d)`` in log-log space. A decay exponent ``d < 1``
+    indicates the presence of long-range correlations.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Input time series.
+    max_lag : int, optional
+        Maximum lag to analyse (default: ``int(len(values) * 0.25)``).
+
+    Returns
+    -------
+    tuple of (acf, decay_exponent)
+        * **acf** — normalised autocorrelation from lag 0 to *max_lag*.
+        * **decay_exponent** — positive exponent ``d`` of power-law decay.
+          Returns ``nan`` when the fit cannot be computed.
+    """
+    values = np.asarray(values).flatten()
+    values = values[~np.isnan(values)]
+    n = len(values)
+
+    if n < DEFAULT_MEMORY_MIN_SAMPLES:
+        return np.array([]), float(np.nan)
+
+    if max_lag is None:
+        max_lag = int(n * DEFAULT_MAX_LAG_RATIO)
+
+    max_lag = max(max_lag, 1)
+
+    # Compute autocorrelation via full cross-correlation
+    values_centered = values - np.mean(values)
+    autocorr = np.correlate(values_centered, values_centered, mode='full')
+    autocorr = autocorr[n - 1:]  # keep non-negative lags
+
+    if autocorr[0] == 0:
+        return np.zeros(min(max_lag + 1, n)), float(np.nan)
+
+    autocorr = autocorr / autocorr[0]  # normalise
+
+    acf = autocorr[:max_lag + 1]
+
+    # Fit power-law decay: ACF(tau) ~ tau^(-d)
+    lags = np.arange(1, len(acf))
+    acf_positive = acf[1:]
+
+    # Only use positive ACF values for log-log fit
+    valid = acf_positive > 0
+    if np.sum(valid) < 2:
+        return acf, float(np.nan)
+
+    log_lags = np.log(lags[valid])
+    log_acf = np.log(acf_positive[valid])
+
+    decay_exp, _ = np.polyfit(log_lags, log_acf, 1)
+
+    return acf, float(-decay_exp)
+
+
+def variance_growth(
+    values: np.ndarray,
+    max_lag: Optional[int] = None,
+) -> Tuple[np.ndarray, float]:
+    """
+    Analyse variance growth with aggregation scale.
+
+    For a random walk the variance of aggregated blocks decays linearly with
+    scale (exponent = -1).  Persistent series decay slower (exponent > -1)
+    and anti-persistent series decay faster (exponent < -1).
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Input time series.
+    max_lag : int, optional
+        Maximum aggregation scale (default: ``int(len(values) * 0.25)``).
+
+    Returns
+    -------
+    tuple of (scales, scaling_exponent)
+        * **scales** — aggregation scales from 1 to *max_lag*.
+        * **scaling_exponent** — power-law exponent of variance vs. scale.
+          Returns ``nan`` when the fit cannot be computed.
+    """
+    values = np.asarray(values).flatten()
+    values = values[~np.isnan(values)]
+    n = len(values)
+
+    if n < DEFAULT_MEMORY_MIN_SAMPLES:
+        return np.array([]), float(np.nan)
+
+    if max_lag is None:
+        max_lag = int(n * DEFAULT_MAX_LAG_RATIO)
+
+    max_lag = max(max_lag, 1)
+
+    scales = np.arange(1, max_lag + 1)
+    variances = []
+
+    for scale in scales:
+        n_agg = n // scale
+        if n_agg < 2:
+            variances.append(np.nan)
+            continue
+
+        aggregated = [
+            np.mean(values[i * scale:(i + 1) * scale])
+            for i in range(n_agg)
+        ]
+
+        variances.append(np.var(aggregated))
+
+    variances = np.array(variances)
+
+    # Fit power law in log-log space
+    valid = ~np.isnan(variances) & (variances > 0)
+    if np.sum(valid) < 2:
+        return scales, float(np.nan)
+
+    log_scales = np.log(scales[valid])
+    log_var = np.log(variances[valid])
+
+    exponent, _ = np.polyfit(log_scales, log_var, 1)
+
+    return scales, float(exponent)

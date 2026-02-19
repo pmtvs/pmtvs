@@ -279,3 +279,530 @@ def lyapunov_spectrum(
 
     # Sort descending
     return np.sort(spectrum)[::-1]
+
+
+def lyapunov_rosenstein(
+    signal: np.ndarray,
+    dimension: int = None,
+    delay: int = None,
+    min_tsep: int = None,
+    max_iter: int = None
+) -> Tuple[float, np.ndarray, np.ndarray]:
+    """
+    Estimate largest Lyapunov exponent using Rosenstein's algorithm.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D time series.
+    dimension : int, optional
+        Embedding dimension (auto-detected if None).
+    delay : int, optional
+        Time delay (auto-detected if None).
+    min_tsep : int, optional
+        Minimum temporal separation for neighbors.
+    max_iter : int, optional
+        Maximum number of iterations.
+
+    Returns
+    -------
+    tuple
+        (lambda_max, divergence, iterations)
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < 50:
+        return np.nan, np.array([]), np.array([])
+
+    if delay is None:
+        delay = _auto_delay_acf(signal)
+    if dimension is None:
+        dimension = _auto_dim_simple(signal, delay)
+    if min_tsep is None:
+        min_tsep = delay * dimension
+    if max_iter is None:
+        max_iter = min(n // 10, 500)
+
+    n_points = n - (dimension - 1) * delay
+    if n_points < min_tsep + max_iter + 10:
+        max_iter = max(10, n_points - min_tsep - 10)
+        if max_iter < 10:
+            return np.nan, np.array([]), np.array([])
+
+    embedded = _embed_signal(signal, dimension, delay)
+    n_pts = len(embedded)
+
+    nn_indices = np.full(n_pts, -1, dtype=int)
+    nn_dists = np.full(n_pts, np.inf)
+
+    for i in range(n_pts):
+        for j in range(n_pts):
+            if abs(i - j) >= min_tsep:
+                dist = np.linalg.norm(embedded[i] - embedded[j])
+                if 0 < dist < nn_dists[i]:
+                    nn_dists[i] = dist
+                    nn_indices[i] = j
+
+    divergence = np.zeros(max_iter)
+    counts = np.zeros(max_iter)
+
+    for i in range(n_pts - max_iter):
+        j = nn_indices[i]
+        if j < 0 or j >= n_pts - max_iter:
+            continue
+        for k in range(max_iter):
+            dist = np.linalg.norm(embedded[i + k] - embedded[j + k])
+            if dist > 0:
+                divergence[k] += np.log(dist)
+                counts[k] += 1
+
+    valid = counts > 0
+    divergence[valid] = divergence[valid] / counts[valid]
+    divergence[~valid] = np.nan
+
+    iterations = np.arange(max_iter)
+
+    fit_end = max(10, max_iter // 5)
+    fit_mask = np.isfinite(divergence[:fit_end])
+    if np.sum(fit_mask) < 3:
+        return np.nan, divergence, iterations
+
+    x = iterations[:fit_end][fit_mask]
+    y = divergence[:fit_end][fit_mask]
+    slope, _ = np.polyfit(x, y, 1)
+
+    return float(slope / delay), divergence, iterations
+
+
+def lyapunov_kantz(
+    signal: np.ndarray,
+    dimension: int = None,
+    delay: int = None,
+    min_tsep: int = None,
+    epsilon: float = None,
+    max_iter: int = None
+) -> Tuple[float, np.ndarray]:
+    """
+    Estimate largest Lyapunov exponent using Kantz's algorithm.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D time series.
+    dimension : int, optional
+        Embedding dimension.
+    delay : int, optional
+        Time delay.
+    min_tsep : int, optional
+        Minimum temporal separation.
+    epsilon : float, optional
+        Neighborhood radius.
+    max_iter : int, optional
+        Maximum iterations.
+
+    Returns
+    -------
+    tuple
+        (lambda_max, divergence)
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < 50:
+        return np.nan, np.array([])
+
+    if delay is None:
+        delay = _auto_delay_acf(signal)
+    if dimension is None:
+        dimension = _auto_dim_simple(signal, delay)
+    if min_tsep is None:
+        min_tsep = delay * dimension
+    if max_iter is None:
+        max_iter = min(n // 10, 500)
+
+    embedded = _embed_signal(signal, dimension, delay)
+    n_pts = len(embedded)
+
+    if n_pts < min_tsep + max_iter + 10:
+        max_iter = max(10, n_pts - min_tsep - 10)
+        if max_iter < 10:
+            return np.nan, np.array([])
+
+    if epsilon is None:
+        sample_idx = np.random.choice(n_pts, min(100, n_pts), replace=False)
+        dists = []
+        for i in sample_idx:
+            for j in sample_idx:
+                if i != j:
+                    dists.append(np.linalg.norm(embedded[i] - embedded[j]))
+        epsilon = np.percentile(dists, 10) if dists else 1.0
+
+    divergence = np.zeros(max_iter)
+    counts = np.zeros(max_iter)
+
+    for i in range(n_pts - max_iter):
+        neighbors = []
+        for j in range(n_pts):
+            if abs(i - j) >= min_tsep:
+                dist = np.linalg.norm(embedded[i] - embedded[j])
+                if 0 < dist < epsilon:
+                    neighbors.append(j)
+
+        if not neighbors:
+            continue
+
+        for k in range(max_iter):
+            if i + k >= n_pts:
+                break
+            neighbor_dists = []
+            for j in neighbors:
+                if j + k < n_pts:
+                    dist = np.linalg.norm(embedded[i + k] - embedded[j + k])
+                    if dist > 0:
+                        neighbor_dists.append(np.log(dist))
+            if neighbor_dists:
+                divergence[k] += np.mean(neighbor_dists)
+                counts[k] += 1
+
+    valid = counts > 0
+    divergence[valid] = divergence[valid] / counts[valid]
+    divergence[~valid] = np.nan
+
+    fit_end = max(10, max_iter // 5)
+    iterations = np.arange(max_iter)
+    fit_mask = np.isfinite(divergence[:fit_end])
+    if np.sum(fit_mask) < 3:
+        return np.nan, divergence
+
+    x = iterations[:fit_end][fit_mask]
+    y = divergence[:fit_end][fit_mask]
+    slope, _ = np.polyfit(x, y, 1)
+
+    return float(slope / delay), divergence
+
+
+def estimate_embedding_dim_cao(
+    signal: np.ndarray,
+    max_dim: int = 10,
+    tau: int = None
+) -> dict:
+    """
+    Cao's method for embedding dimension estimation.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D time series.
+    max_dim : int
+        Maximum embedding dimension to test.
+    tau : int, optional
+        Time delay (auto-detected if None).
+
+    Returns
+    -------
+    dict
+        optimal_dim, is_deterministic, E1_values, E2_values, E1_ratio, confidence.
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < 50:
+        return {'optimal_dim': 3, 'is_deterministic': None,
+                'E1_values': None, 'E2_values': None,
+                'E1_ratio': None, 'confidence': 0.0}
+
+    if tau is None:
+        tau = _auto_delay_acf(signal)
+
+    E1 = np.zeros(max_dim)
+    E2 = np.zeros(max_dim)
+
+    for d in range(1, max_dim + 1):
+        n_points_d = n - (d - 1) * tau
+        n_points_d1 = n - d * tau
+
+        if n_points_d < 10 or n_points_d1 < 10:
+            E1[d - 1] = np.nan
+            E2[d - 1] = np.nan
+            continue
+
+        embedded_d = _embed_signal(signal, d, tau)
+        embedded_d1 = _embed_signal(signal, d + 1, tau)
+        N = min(len(embedded_d), len(embedded_d1))
+
+        if N < 10:
+            E1[d - 1] = np.nan
+            E2[d - 1] = np.nan
+            continue
+
+        a_values = []
+        a_star_values = []
+        sample_size = min(300, N)
+        sample_idx = np.random.choice(N, sample_size, replace=False)
+
+        for i in sample_idx:
+            min_dist = np.inf
+            nn_idx = -1
+            for j in sample_idx:
+                if i == j:
+                    continue
+                dist = np.max(np.abs(embedded_d[i] - embedded_d[j]))
+                if 0 < dist < min_dist:
+                    min_dist = dist
+                    nn_idx = j
+
+            if nn_idx < 0 or min_dist == 0:
+                continue
+
+            dist_d1 = np.max(np.abs(embedded_d1[i] - embedded_d1[nn_idx]))
+            a_values.append(dist_d1 / (min_dist + 1e-12))
+
+            idx_d1 = min(i + d * tau, n - 1)
+            idx_d1_nn = min(nn_idx + d * tau, n - 1)
+            a_star_values.append(abs(signal[idx_d1] - signal[idx_d1_nn]))
+
+        E1[d - 1] = np.mean(a_values) if a_values else np.nan
+        E2[d - 1] = np.mean(a_star_values) if a_star_values else np.nan
+
+    E1_ratio = np.zeros(max_dim - 1)
+    for d in range(1, max_dim):
+        if E1[d - 1] > 1e-10:
+            E1_ratio[d - 1] = E1[d] / E1[d - 1]
+        else:
+            E1_ratio[d - 1] = np.nan
+
+    threshold = 0.95
+    optimal_dim = max_dim
+    for d in range(len(E1_ratio)):
+        if np.isfinite(E1_ratio[d]) and E1_ratio[d] > threshold:
+            optimal_dim = d + 1
+            break
+
+    E2_valid = E2[np.isfinite(E2)]
+    if len(E2_valid) >= 2:
+        E2_std = np.std(E2_valid)
+        E2_mean = np.mean(E2_valid)
+        is_deterministic = E2_std / (E2_mean + 1e-12) > 0.1
+    else:
+        is_deterministic = None
+
+    valid_ratios = E1_ratio[np.isfinite(E1_ratio)]
+    if len(valid_ratios) >= 2:
+        confidence = min(1.0, 1.0 / (np.std(valid_ratios) + 0.1))
+    else:
+        confidence = 0.5
+
+    return {
+        'optimal_dim': optimal_dim,
+        'is_deterministic': is_deterministic,
+        'E1_values': E1,
+        'E2_values': E2,
+        'E1_ratio': E1_ratio,
+        'confidence': float(confidence),
+    }
+
+
+def estimate_tau_ami(
+    signal: np.ndarray,
+    max_tau: int = 50,
+    n_bins: int = 64
+) -> int:
+    """
+    Estimate embedding delay using Average Mutual Information.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D time series.
+    max_tau : int
+        Maximum delay to test.
+    n_bins : int
+        Number of bins for histogram.
+
+    Returns
+    -------
+    int
+        Optimal embedding delay.
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < max_tau + 10:
+        return 1
+
+    ami_values = []
+    for tau in range(1, min(max_tau + 1, n // 2)):
+        x = signal[:-tau]
+        y = signal[tau:]
+        try:
+            hist_xy, _, _ = np.histogram2d(x, y, bins=n_bins)
+            hist_x, _ = np.histogram(x, bins=n_bins)
+            hist_y, _ = np.histogram(y, bins=n_bins)
+        except Exception:
+            ami_values.append(np.nan)
+            continue
+
+        p_xy = hist_xy / hist_xy.sum()
+        p_x = hist_x / hist_x.sum()
+        p_y = hist_y / hist_y.sum()
+
+        mi = 0.0
+        for i in range(n_bins):
+            for j in range(n_bins):
+                if p_xy[i, j] > 0 and p_x[i] > 0 and p_y[j] > 0:
+                    mi += p_xy[i, j] * np.log(p_xy[i, j] / (p_x[i] * p_y[j]))
+        ami_values.append(mi)
+
+    if not ami_values:
+        return 1
+
+    ami_arr = np.array(ami_values)
+    for i in range(1, len(ami_arr) - 1):
+        if np.isfinite(ami_arr[i]):
+            if ami_arr[i] < ami_arr[i - 1] and ami_arr[i] <= ami_arr[i + 1]:
+                return i + 1
+
+    if np.isfinite(ami_arr[0]):
+        threshold = ami_arr[0] / np.e
+        below = np.where(ami_arr < threshold)[0]
+        if len(below) > 0:
+            return int(below[0]) + 1
+
+    return max_tau // 4
+
+
+def ftle_local_linearization(
+    trajectory: np.ndarray,
+    time_horizon: int = 10,
+    n_neighbors: int = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute FTLE via local linearization at each point.
+
+    Parameters
+    ----------
+    trajectory : np.ndarray
+        State-space trajectory (n_points, n_dims).
+    time_horizon : int
+        Time steps for measuring stretching.
+    n_neighbors : int, optional
+        Neighbors for local estimation.
+
+    Returns
+    -------
+    tuple
+        (ftle_values, valid_indices)
+    """
+    trajectory = np.asarray(trajectory)
+    if trajectory.ndim == 1:
+        trajectory = trajectory.reshape(-1, 1)
+    n_points, dim = trajectory.shape
+
+    if n_neighbors is None:
+        n_neighbors = 2 * dim + 1
+
+    ftle_values = np.full(n_points, np.nan)
+
+    for i in range(n_points - time_horizon):
+        dists = np.linalg.norm(trajectory - trajectory[i], axis=1)
+        indices = np.argsort(dists)[1:n_neighbors + 1]
+        valid = [j for j in indices if j + time_horizon < n_points]
+
+        if len(valid) < dim + 1:
+            continue
+
+        delta_x0 = np.array([trajectory[j] - trajectory[i] for j in valid])
+        delta_xT = np.array([trajectory[j + time_horizon] - trajectory[i + time_horizon]
+                            for j in valid])
+
+        try:
+            Phi_T, _, _, _ = np.linalg.lstsq(delta_x0, delta_xT, rcond=None)
+            Phi = Phi_T.T
+            C = Phi.T @ Phi
+            eigenvalues = np.linalg.eigvalsh(C)
+            max_eig = np.max(eigenvalues)
+            if max_eig > 0:
+                ftle_values[i] = np.log(np.sqrt(max_eig)) / time_horizon
+        except (np.linalg.LinAlgError, ValueError):
+            continue
+
+    valid_idx = np.where(np.isfinite(ftle_values))[0]
+    return ftle_values, valid_idx
+
+
+def ftle_direct_perturbation(
+    signal: np.ndarray,
+    dimension: int = 3,
+    delay: int = 1,
+    time_horizon: int = 10,
+    n_neighbors: int = None,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute FTLE from scalar time series via embedding + perturbation.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        1D time series.
+    dimension : int
+        Embedding dimension.
+    delay : int
+        Time delay.
+    time_horizon : int
+        Time horizon for stretching.
+    n_neighbors : int, optional
+        Neighbors for estimation.
+
+    Returns
+    -------
+    tuple
+        (ftle_values, valid_indices)
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+
+    embedded = _embed_signal(signal, dimension, delay)
+    return ftle_local_linearization(embedded, time_horizon, n_neighbors)
+
+
+# --- Helper functions for new Lyapunov methods ---
+
+def _embed_signal(signal: np.ndarray, dimension: int, delay: int) -> np.ndarray:
+    """Time delay embedding."""
+    n = len(signal)
+    n_points = n - (dimension - 1) * delay
+    if n_points < 1:
+        return np.zeros((0, dimension))
+    embedded = np.zeros((n_points, dimension))
+    for d in range(dimension):
+        embedded[:, d] = signal[d * delay:d * delay + n_points]
+    return embedded
+
+
+def _auto_delay_acf(signal: np.ndarray) -> int:
+    """Auto-detect delay using autocorrelation 1/e decay."""
+    n = len(signal)
+    centered = signal - np.mean(signal)
+    var = np.var(centered)
+    if var == 0:
+        return 1
+    for lag in range(1, n // 4):
+        acf = np.mean(centered[:-lag] * centered[lag:]) / var
+        if acf < 1 / np.e:
+            return lag
+    return max(1, n // 10)
+
+
+def _auto_dim_simple(signal: np.ndarray, delay: int) -> int:
+    """Simple auto-detect of embedding dimension."""
+    n = len(signal)
+    for dim in range(2, min(11, n // (3 * delay))):
+        n_pts = n - (dim - 1) * delay
+        if n_pts < 50:
+            return max(2, dim - 1)
+    return 3

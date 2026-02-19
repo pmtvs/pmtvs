@@ -45,6 +45,10 @@ from pmtvs_fractal.core import (
     hurst_exponent,
     dfa,
     hurst_r2,
+    detrended_fluctuation_analysis,
+    rescaled_range,
+    long_range_correlation,
+    variance_growth,
 )
 
 __all__ = [
@@ -53,4 +57,8 @@ __all__ = [
     "hurst_exponent",
     "dfa",
     "hurst_r2",
+    "detrended_fluctuation_analysis",
+    "rescaled_range",
+    "long_range_correlation",
+    "variance_growth",
 ]

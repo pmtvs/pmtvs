@@ -16,6 +16,11 @@ from pmtvs_network.network import (
     adjacency_from_correlation,
 )
 
+from pmtvs_network.community import (
+    modularity,
+    community_detection,
+)
+
 __all__ = [
     "__version__",
     "BACKEND",
@@ -27,4 +32,6 @@ __all__ = [
     "density",
     "connected_components",
     "adjacency_from_correlation",
+    "modularity",
+    "community_detection",
 ]

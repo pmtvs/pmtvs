@@ -301,3 +301,178 @@ def _get_line_lengths(line: np.ndarray, min_length: int) -> list:
         lengths.append(current_length)
 
     return lengths
+
+
+def max_diagonal_line(R: np.ndarray, min_line: int = 2) -> int:
+    """
+    Compute maximum diagonal line length (L_max).
+
+    Parameters
+    ----------
+    R : np.ndarray
+        Recurrence matrix.
+    min_line : int
+        Minimum diagonal line length.
+
+    Returns
+    -------
+    int
+        Maximum diagonal line length.
+    """
+    R = np.asarray(R)
+    n = len(R)
+
+    if n < min_line:
+        return 0
+
+    max_len = 0
+    for k in range(1, n):
+        diag = np.diag(R, k)
+        lengths = _get_line_lengths(diag, min_line)
+        if lengths:
+            max_len = max(max_len, max(lengths))
+        diag = np.diag(R, -k)
+        lengths = _get_line_lengths(diag, min_line)
+        if lengths:
+            max_len = max(max_len, max(lengths))
+
+    return max_len
+
+
+def divergence_rqa(R: np.ndarray, min_line: int = 2) -> float:
+    """
+    Compute divergence (1 / L_max).
+
+    Parameters
+    ----------
+    R : np.ndarray
+        Recurrence matrix.
+    min_line : int
+        Minimum diagonal line length.
+
+    Returns
+    -------
+    float
+        Divergence measure.
+    """
+    l_max = max_diagonal_line(R, min_line)
+    if l_max == 0:
+        return np.nan
+    return float(1.0 / l_max)
+
+
+def determinism_from_signal(
+    signal: np.ndarray,
+    dimension: int = 3,
+    delay: int = 1,
+    threshold_percentile: float = 10.0,
+    min_line_length: int = 2,
+) -> float:
+    """
+    Compute determinism directly from a signal.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input time series.
+    dimension : int
+        Embedding dimension.
+    delay : int
+        Time delay.
+    threshold_percentile : float
+        Percentile for recurrence threshold.
+    min_line_length : int
+        Minimum diagonal line length.
+
+    Returns
+    -------
+    float
+        Determinism in [0, 1].
+    """
+    signal = np.asarray(signal).flatten()
+    signal = signal[~np.isnan(signal)]
+
+    if len(signal) < dimension * delay + min_line_length:
+        return np.nan
+
+    # Simple embedding
+    n = len(signal)
+    n_points = n - (dimension - 1) * delay
+    if n_points < 10:
+        return np.nan
+
+    embedded = np.zeros((n_points, dimension))
+    for d in range(dimension):
+        embedded[:, d] = signal[d * delay:d * delay + n_points]
+
+    # Limit size for performance
+    if n_points > 200:
+        idx = np.linspace(0, n_points - 1, 200, dtype=int)
+        embedded = embedded[idx]
+
+    R = recurrence_matrix(embedded, threshold_percentile=threshold_percentile)
+    return determinism(R, min_line_length)
+
+
+def rqa_metrics(
+    signal: np.ndarray,
+    dimension: int = 3,
+    delay: int = 1,
+    threshold_percentile: float = 10.0,
+    min_line_length: int = 2,
+) -> dict:
+    """
+    Compute all RQA metrics from a signal.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input time series.
+    dimension : int
+        Embedding dimension.
+    delay : int
+        Time delay.
+    threshold_percentile : float
+        Percentile for recurrence threshold.
+    min_line_length : int
+        Minimum line length.
+
+    Returns
+    -------
+    dict
+        recurrence_rate, determinism, laminarity, trapping_time,
+        entropy, max_diagonal_line, divergence.
+    """
+    signal = np.asarray(signal).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    nan_result = {
+        'recurrence_rate': np.nan, 'determinism': np.nan,
+        'laminarity': np.nan, 'trapping_time': np.nan,
+        'entropy': np.nan, 'max_diagonal_line': 0, 'divergence': np.nan,
+    }
+
+    n_points = n - (dimension - 1) * delay
+    if n_points < 10:
+        return nan_result
+
+    embedded = np.zeros((n_points, dimension))
+    for d in range(dimension):
+        embedded[:, d] = signal[d * delay:d * delay + n_points]
+
+    if n_points > 200:
+        idx = np.linspace(0, n_points - 1, 200, dtype=int)
+        embedded = embedded[idx]
+
+    R = recurrence_matrix(embedded, threshold_percentile=threshold_percentile)
+
+    return {
+        'recurrence_rate': recurrence_rate(R),
+        'determinism': determinism(R, min_line_length),
+        'laminarity': laminarity(R, min_line_length),
+        'trapping_time': trapping_time(R, min_line_length),
+        'entropy': entropy_recurrence(R, min_line_length),
+        'max_diagonal_line': max_diagonal_line(R, min_line_length),
+        'divergence': divergence_rqa(R, min_line_length),
+    }

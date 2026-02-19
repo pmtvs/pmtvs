@@ -387,6 +387,105 @@ def phase_spectrum(
     return freqs, phase
 
 
+def spearman_correlation(x: np.ndarray, y: np.ndarray) -> float:
+    """
+    Compute Spearman rank correlation coefficient.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        First signal
+    y : np.ndarray
+        Second signal
+
+    Returns
+    -------
+    float
+        Spearman correlation in [-1, 1]
+
+    Notes
+    -----
+    Measures monotonic (not necessarily linear) relationship between
+    two variables. Computed as Pearson correlation of rank-transformed data.
+    """
+    x = np.asarray(x).flatten()
+    y = np.asarray(y).flatten()
+
+    if len(x) != len(y) or len(x) < 3:
+        return np.nan
+
+    # Remove NaN pairs
+    mask = ~(np.isnan(x) | np.isnan(y))
+    x = x[mask]
+    y = y[mask]
+
+    if len(x) < 3:
+        return np.nan
+
+    # Rank-transform
+    rx = np.argsort(np.argsort(x)).astype(np.float64)
+    ry = np.argsort(np.argsort(y)).astype(np.float64)
+
+    # Pearson correlation of ranks
+    mx, my = np.mean(rx), np.mean(ry)
+    num = np.sum((rx - mx) * (ry - my))
+    den = np.sqrt(np.sum((rx - mx) ** 2) * np.sum((ry - my) ** 2))
+
+    return float(num / den) if den > 1e-15 else 0.0
+
+
+def kendall_tau(x: np.ndarray, y: np.ndarray) -> float:
+    """
+    Compute Kendall's tau rank correlation (tau-a).
+
+    Parameters
+    ----------
+    x : np.ndarray
+        First signal
+    y : np.ndarray
+        Second signal
+
+    Returns
+    -------
+    float
+        Kendall's tau in [-1, 1]
+
+    Notes
+    -----
+    Based on counting concordant and discordant pairs.
+    A pair (i, j) is concordant if x_i < x_j and y_i < y_j (or both greater).
+    Discordant if the ordering disagrees.
+    """
+    x = np.asarray(x).flatten()
+    y = np.asarray(y).flatten()
+
+    if len(x) != len(y) or len(x) < 3:
+        return np.nan
+
+    # Remove NaN pairs
+    mask = ~(np.isnan(x) | np.isnan(y))
+    x = x[mask]
+    y = y[mask]
+
+    if len(x) < 3:
+        return 0.0
+
+    concordant = 0
+    discordant = 0
+    for i in range(len(x) - 1):
+        dx = x[i + 1:] - x[i]
+        dy = y[i + 1:] - y[i]
+        product = dx * dy
+        concordant += np.sum(product > 0)
+        discordant += np.sum(product < 0)
+
+    denom = concordant + discordant
+    if denom == 0:
+        return 0.0
+
+    return float((concordant - discordant) / denom)
+
+
 def wavelet_coherence(
     x: np.ndarray,
     y: np.ndarray,

@@ -359,3 +359,240 @@ def mann_kendall_test(signal: np.ndarray) -> Tuple[float, float]:
     p_value = 2 * (1 - 0.5 * (1 + erf(abs(z) / np.sqrt(2))))
 
     return (float(tau), float(p_value))
+
+
+def bootstrap_ci(
+    data: np.ndarray,
+    statistic: Callable = np.mean,
+    confidence: float = 0.95,
+    n_bootstrap: int = 1000
+) -> Tuple[float, float]:
+    """
+    Compute bootstrap confidence interval (alias for bootstrap_confidence_interval).
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
+    statistic : callable
+        Statistic function
+    confidence : float
+        Confidence level (e.g., 0.95)
+    n_bootstrap : int
+        Number of bootstrap samples
+
+    Returns
+    -------
+    tuple
+        (lower_bound, upper_bound)
+    """
+    return bootstrap_confidence_interval(data, statistic, confidence, n_bootstrap)
+
+
+def bootstrap_std(
+    data: np.ndarray,
+    n_bootstrap: int = 1000
+) -> float:
+    """
+    Compute bootstrap standard error of the mean.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data
+    n_bootstrap : int
+        Number of bootstrap samples
+
+    Returns
+    -------
+    float
+        Bootstrap standard error
+    """
+    data = np.asarray(data).flatten()
+    data = data[~np.isnan(data)]
+    n = len(data)
+
+    if n < 2:
+        return np.nan
+
+    means = np.zeros(n_bootstrap)
+    for i in range(n_bootstrap):
+        sample = np.random.choice(data, size=n, replace=True)
+        means[i] = np.mean(sample)
+
+    return float(np.std(means, ddof=1))
+
+
+def block_bootstrap_ci(
+    data: np.ndarray,
+    statistic: Callable = np.mean,
+    block_size: Optional[int] = None,
+    confidence: float = 0.95,
+    n_bootstrap: int = 1000
+) -> Tuple[float, float]:
+    """
+    Block bootstrap confidence interval for dependent data.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Input data (time series)
+    statistic : callable
+        Statistic function
+    block_size : int, optional
+        Size of contiguous blocks. Defaults to int(sqrt(n)).
+    confidence : float
+        Confidence level
+    n_bootstrap : int
+        Number of bootstrap samples
+
+    Returns
+    -------
+    tuple
+        (lower_bound, upper_bound)
+    """
+    data = np.asarray(data).flatten()
+    data = data[~np.isnan(data)]
+    n = len(data)
+
+    if n < 4:
+        return (np.nan, np.nan)
+
+    if block_size is None:
+        block_size = max(1, int(np.sqrt(n)))
+
+    n_blocks = int(np.ceil(n / block_size))
+    stats = np.zeros(n_bootstrap)
+
+    for i in range(n_bootstrap):
+        # Sample blocks with replacement
+        blocks = []
+        for _ in range(n_blocks):
+            start = np.random.randint(0, n - block_size + 1)
+            blocks.append(data[start:start + block_size])
+        sample = np.concatenate(blocks)[:n]
+        stats[i] = statistic(sample)
+
+    alpha = 1 - confidence
+    lower = np.percentile(stats, 100 * alpha / 2)
+    upper = np.percentile(stats, 100 * (1 - alpha / 2))
+
+    return (float(lower), float(upper))
+
+
+def marchenko_pastur_test(
+    data: np.ndarray,
+    gamma: Optional[float] = None
+) -> Tuple[float, float]:
+    """
+    Test whether eigenvalue distribution follows Marchenko-Pastur law.
+
+    Useful for detecting signal vs. noise in correlation matrices.
+
+    Parameters
+    ----------
+    data : np.ndarray
+        Data matrix (n_samples x n_features)
+    gamma : float, optional
+        Ratio n_features / n_samples. Computed from data if None.
+
+    Returns
+    -------
+    tuple
+        (max_eigenvalue, mp_upper_bound) where mp_upper_bound is the
+        theoretical maximum eigenvalue under null (pure noise)
+    """
+    data = np.asarray(data, dtype=np.float64)
+
+    if data.ndim == 1:
+        return (np.nan, np.nan)
+
+    n, p = data.shape
+    if n < 4 or p < 2:
+        return (np.nan, np.nan)
+
+    # Remove NaN rows
+    mask = ~np.any(np.isnan(data), axis=1)
+    data = data[mask]
+    n = data.shape[0]
+
+    if n < 4:
+        return (np.nan, np.nan)
+
+    if gamma is None:
+        gamma = p / n
+
+    # Standardize columns
+    data = (data - np.mean(data, axis=0)) / (np.std(data, axis=0) + 1e-12)
+
+    # Correlation matrix
+    corr = data.T @ data / n
+
+    eigenvalues = np.linalg.eigvalsh(corr)
+
+    max_eig = float(np.max(eigenvalues))
+
+    # Marchenko-Pastur upper bound
+    mp_upper = float((1 + np.sqrt(gamma)) ** 2)
+
+    return (max_eig, mp_upper)
+
+
+def arch_test(
+    signal: np.ndarray,
+    nlags: int = 5
+) -> Tuple[float, float]:
+    """
+    Engle's ARCH test for heteroscedasticity.
+
+    Tests whether residuals exhibit autoregressive conditional
+    heteroscedasticity.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal (typically residuals)
+    nlags : int
+        Number of lags
+
+    Returns
+    -------
+    tuple
+        (lm_statistic, p_value)
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < nlags + 10:
+        return (np.nan, np.nan)
+
+    # Demean and square
+    resid = signal - np.mean(signal)
+    sq_resid = resid ** 2
+
+    # Regress squared residuals on lagged squared residuals
+    y = sq_resid[nlags:]
+    X = np.column_stack(
+        [np.ones(len(y))] + [sq_resid[nlags - i - 1:n - i - 1] for i in range(nlags)]
+    )
+
+    try:
+        beta = np.linalg.lstsq(X, y, rcond=None)[0]
+        fitted = X @ beta
+        ss_res = np.sum((y - fitted) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+
+        if ss_tot <= 0:
+            return (np.nan, np.nan)
+
+        r_squared = 1 - ss_res / ss_tot
+        lm_stat = float(len(y) * r_squared)
+
+        # Chi-squared p-value
+        from scipy.stats import chi2
+        p_value = float(1 - chi2.cdf(lm_stat, nlags))
+
+        return (lm_stat, p_value)
+    except (np.linalg.LinAlgError, Exception):
+        return (np.nan, np.nan)

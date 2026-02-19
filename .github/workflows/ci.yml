@@ -28,7 +28,7 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install maturin pytest numpy
+          pip install maturin pytest numpy scipy
 
       - name: Build and test Rust packages
         run: |
@@ -43,7 +43,7 @@ jobs:
       - name: Install pure Python packages
         run: |
           source .venv/bin/activate
-          for pkg in packages/pmtvs-dynamics packages/pmtvs-spectral packages/pmtvs-matrix packages/pmtvs-topology packages/pmtvs-network packages/pmtvs-information packages/pmtvs-tests; do
+          for pkg in packages/pmtvs-dynamics packages/pmtvs-spectral packages/pmtvs-matrix packages/pmtvs-topology packages/pmtvs-network packages/pmtvs-information packages/pmtvs-tests packages/pmtvs-regression; do
             pip install -e $pkg
           done
           pip install -e packages/pmtvs

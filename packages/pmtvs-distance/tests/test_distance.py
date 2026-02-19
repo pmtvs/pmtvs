@@ -7,6 +7,8 @@ from pmtvs_distance import (
     cosine_distance,
     manhattan_distance,
     dtw_distance,
+    earth_movers_distance,
+    cosine_similarity,
 )
 
 
@@ -143,3 +145,95 @@ class TestDTWDistance:
         x = np.array([])
         y = np.array([1.0, 2.0])
         assert np.isnan(dtw_distance(x, y))
+
+
+class TestEarthMoversDistance:
+    """Tests for Earth Mover's Distance."""
+
+    def test_identical_distributions(self):
+        """Identical distributions should have EMD of 0."""
+        np.random.seed(42)
+        x = np.random.randn(100)
+        assert earth_movers_distance(x, x) == pytest.approx(0.0)
+
+    def test_shifted_distributions(self):
+        """Shifted distribution should have EMD equal to the shift."""
+        np.random.seed(42)
+        x = np.random.randn(1000)
+        y = x + 5.0
+        emd = earth_movers_distance(x, y)
+        assert emd == pytest.approx(5.0, abs=0.1)
+
+    def test_non_negative(self):
+        """EMD should always be non-negative."""
+        np.random.seed(42)
+        for _ in range(10):
+            x = np.random.randn(100)
+            y = np.random.randn(100)
+            assert earth_movers_distance(x, y) >= 0
+
+    def test_different_lengths(self):
+        """EMD should handle different length inputs."""
+        np.random.seed(42)
+        x = np.random.randn(50)
+        y = np.random.randn(100)
+        emd = earth_movers_distance(x, y)
+        assert np.isfinite(emd)
+        assert emd >= 0
+
+    def test_empty_returns_nan(self):
+        """Empty input should return NaN."""
+        x = np.array([])
+        y = np.array([1.0, 2.0])
+        assert np.isnan(earth_movers_distance(x, y))
+
+
+class TestCosineSimilarity:
+    """Tests for cosine similarity."""
+
+    def test_identical_vectors(self):
+        """Identical vectors should have similarity 1."""
+        x = np.array([1.0, 2.0, 3.0])
+        assert cosine_similarity(x, x) == pytest.approx(1.0)
+
+    def test_opposite_vectors(self):
+        """Opposite vectors should have similarity -1."""
+        x = np.array([1.0, 0.0, 0.0])
+        y = np.array([-1.0, 0.0, 0.0])
+        assert cosine_similarity(x, y) == pytest.approx(-1.0)
+
+    def test_orthogonal_vectors(self):
+        """Orthogonal vectors should have similarity 0."""
+        x = np.array([1.0, 0.0])
+        y = np.array([0.0, 1.0])
+        assert cosine_similarity(x, y) == pytest.approx(0.0)
+
+    def test_bounded(self):
+        """Cosine similarity should be in [-1, 1]."""
+        np.random.seed(42)
+        for _ in range(10):
+            x = np.random.randn(100)
+            y = np.random.randn(100)
+            sim = cosine_similarity(x, y)
+            assert -1.0 <= sim <= 1.0
+
+    def test_different_lengths_returns_nan(self):
+        """Different length vectors should return NaN."""
+        x = np.array([1.0, 2.0, 3.0])
+        y = np.array([1.0, 2.0])
+        assert np.isnan(cosine_similarity(x, y))
+
+    def test_zero_vector_returns_nan(self):
+        """Zero vector should return NaN."""
+        x = np.array([0.0, 0.0, 0.0])
+        y = np.array([1.0, 2.0, 3.0])
+        assert np.isnan(cosine_similarity(x, y))
+
+    def test_relation_to_cosine_distance(self):
+        """Cosine similarity should be 1 - cosine_distance."""
+        np.random.seed(42)
+        x = np.random.randn(50)
+        y = np.random.randn(50)
+        sim = cosine_similarity(x, y)
+        dist = cosine_distance(x, y)
+        assert sim == pytest.approx(1.0 - dist)

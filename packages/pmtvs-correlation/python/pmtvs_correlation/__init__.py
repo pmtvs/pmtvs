@@ -44,6 +44,8 @@ else:
 from pmtvs_correlation.individual import (
     autocorrelation,
     partial_autocorrelation,
+    autocorrelation_function,
+    acf_decay_time,
 )
 
 from pmtvs_correlation.pairwise import (
@@ -56,6 +58,8 @@ from pmtvs_correlation.pairwise import (
     cross_spectral_density,
     phase_spectrum,
     wavelet_coherence,
+    spearman_correlation,
+    kendall_tau,
 )
 
 __all__ = [
@@ -64,6 +68,8 @@ __all__ = [
     # Individual
     "autocorrelation",
     "partial_autocorrelation",
+    "autocorrelation_function",
+    "acf_decay_time",
     # Pairwise
     "correlation",
     "covariance",
@@ -74,4 +80,6 @@ __all__ = [
     "cross_spectral_density",
     "phase_spectrum",
     "wavelet_coherence",
+    "spearman_correlation",
+    "kendall_tau",
 ]

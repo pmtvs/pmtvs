@@ -46,6 +46,8 @@ from pmtvs_distance.distance import (
     cosine_distance,
     manhattan_distance,
     dtw_distance,
+    earth_movers_distance,
+    cosine_similarity,
 )
 
 __all__ = [
@@ -55,4 +57,6 @@ __all__ = [
     "cosine_distance",
     "manhattan_distance",
     "dtw_distance",
+    "earth_movers_distance",
+    "cosine_similarity",
 ]

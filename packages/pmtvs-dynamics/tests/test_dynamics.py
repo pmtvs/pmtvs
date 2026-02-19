@@ -6,12 +6,22 @@ from pmtvs_dynamics import (
     ftle,
     largest_lyapunov_exponent,
     lyapunov_spectrum,
+    lyapunov_rosenstein,
+    lyapunov_kantz,
+    estimate_embedding_dim_cao,
+    estimate_tau_ami,
+    ftle_local_linearization,
+    ftle_direct_perturbation,
     recurrence_matrix,
     recurrence_rate,
     determinism,
     laminarity,
     trapping_time,
     entropy_recurrence,
+    max_diagonal_line,
+    divergence_rqa,
+    determinism_from_signal,
+    rqa_metrics,
     correlation_dimension,
     attractor_reconstruction,
     kaplan_yorke_dimension,
@@ -20,6 +30,25 @@ from pmtvs_dynamics import (
     jacobian_eigenvalues,
     bifurcation_indicator,
     phase_space_contraction,
+    hilbert_stability,
+    wavelet_stability,
+    detect_collapse,
+    estimate_jacobian_local,
+    classify_jacobian_eigenvalues,
+    detect_saddle_points,
+    compute_separatrix_distance,
+    compute_basin_stability,
+    compute_variable_sensitivity,
+    compute_directional_sensitivity,
+    compute_sensitivity_evolution,
+    detect_sensitivity_transitions,
+    compute_influence_matrix,
+    correlation_integral,
+    information_dimension,
+    basin_stability,
+    cycle_counting,
+    local_outlier_factor,
+    time_constant,
 )
 
 
@@ -208,3 +237,188 @@ class TestEdgeCases:
         attractor = attractor_reconstruction(signal, dim=2, tau=1)
         # Should work with NaN filtered out
         assert attractor.shape[0] == 3  # 4 valid points -> 3 vectors
+
+
+class TestNewRecurrence:
+    """Tests for new recurrence functions."""
+
+    def test_max_diagonal_line(self):
+        trajectory = np.random.randn(50, 2)
+        R = recurrence_matrix(trajectory)
+        ml = max_diagonal_line(R)
+        assert isinstance(ml, (int, np.integer))
+        assert ml >= 0
+
+    def test_divergence_rqa(self):
+        trajectory = np.random.randn(50, 2)
+        R = recurrence_matrix(trajectory)
+        div = divergence_rqa(R)
+        assert np.isnan(div) or div > 0
+
+    def test_determinism_from_signal(self):
+        t = np.linspace(0, 4 * np.pi, 200)
+        signal = np.sin(t)
+        det = determinism_from_signal(signal)
+        assert np.isnan(det) or 0 <= det <= 1
+
+    def test_rqa_metrics(self):
+        t = np.linspace(0, 4 * np.pi, 200)
+        signal = np.sin(t)
+        metrics = rqa_metrics(signal)
+        assert isinstance(metrics, dict)
+        assert 'recurrence_rate' in metrics
+        assert 'determinism' in metrics
+
+
+class TestNewLyapunov:
+    """Tests for new Lyapunov functions."""
+
+    def test_lyapunov_rosenstein(self):
+        np.random.seed(42)
+        n = 500
+        x = np.zeros(n)
+        x[0] = 0.1
+        for i in range(1, n):
+            x[i] = 3.9 * x[i-1] * (1 - x[i-1])
+        lam, div, iters = lyapunov_rosenstein(x)
+        assert isinstance(lam, float)
+
+    def test_lyapunov_kantz(self):
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        lam, div = lyapunov_kantz(signal, dimension=3, delay=1)
+        assert isinstance(lam, float)
+
+    def test_estimate_embedding_dim_cao(self):
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        result = estimate_embedding_dim_cao(signal)
+        assert 'optimal_dim' in result
+        assert result['optimal_dim'] >= 1
+
+    def test_estimate_tau_ami(self):
+        t = np.linspace(0, 10 * np.pi, 500)
+        signal = np.sin(t)
+        tau = estimate_tau_ami(signal)
+        assert isinstance(tau, (int, np.integer))
+        assert tau >= 1
+
+    def test_ftle_local_linearization(self):
+        np.random.seed(42)
+        trajectory = np.cumsum(np.random.randn(100, 3), axis=0)
+        ftle_vals, valid_idx = ftle_local_linearization(trajectory, time_horizon=5)
+        assert len(ftle_vals) == 100
+
+    def test_ftle_direct_perturbation(self):
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        ftle_vals, valid_idx = ftle_direct_perturbation(signal, dimension=3, delay=1)
+        assert len(ftle_vals) > 0
+
+
+class TestNewStability:
+    """Tests for new stability functions."""
+
+    def test_hilbert_stability(self):
+        t = np.linspace(0, 4 * np.pi, 500)
+        signal = np.sin(t)
+        result = hilbert_stability(signal)
+        assert isinstance(result, dict)
+        assert 'inst_freq_mean' in result
+        assert np.isfinite(result['inst_freq_mean'])
+
+    def test_wavelet_stability(self):
+        np.random.seed(42)
+        signal = np.random.randn(200)
+        result = wavelet_stability(signal)
+        assert isinstance(result, dict)
+        assert 'energy_low' in result
+
+    def test_detect_collapse_no_collapse(self):
+        signal = np.ones(100) * 5.0
+        result = detect_collapse(signal)
+        assert result['collapse_onset_idx'] == -1
+
+    def test_detect_collapse_with_collapse(self):
+        signal = np.linspace(10, 1, 100)
+        result = detect_collapse(signal, threshold_velocity=-0.05)
+        assert isinstance(result, dict)
+        assert 'collapse_onset_idx' in result
+
+
+class TestSaddle:
+    """Tests for saddle point functions."""
+
+    def test_classify_jacobian_eigenvalues(self):
+        J = np.array([[1.0, 0.0], [0.0, -1.0]])
+        result = classify_jacobian_eigenvalues(J)
+        assert result['is_saddle'] is True
+
+    def test_detect_saddle_points(self):
+        np.random.seed(42)
+        trajectory = np.random.randn(50, 2)
+        score, vel, info = detect_saddle_points(trajectory)
+        assert len(score) == 50
+
+    def test_compute_separatrix_distance(self):
+        trajectory = np.random.randn(50, 2)
+        distances = compute_separatrix_distance(trajectory, np.array([0, 10, 20]))
+        assert len(distances) == 50
+
+    def test_compute_basin_stability(self):
+        score = np.random.rand(100)
+        stability = compute_basin_stability(np.random.randn(100, 2), score, window=20)
+        assert len(stability) == 100
+
+
+class TestSensitivity:
+    """Tests for sensitivity functions."""
+
+    def test_compute_variable_sensitivity(self):
+        np.random.seed(42)
+        trajectory = np.random.randn(50, 3)
+        sens, rank = compute_variable_sensitivity(trajectory, time_horizon=5, n_neighbors=5)
+        assert sens.shape == (50, 3)
+
+    def test_compute_influence_matrix(self):
+        np.random.seed(42)
+        trajectory = np.random.randn(50, 3)
+        influence = compute_influence_matrix(trajectory, time_horizon=5, n_neighbors=5)
+        assert influence.shape == (3, 3)
+
+
+class TestDimension:
+    """Tests for dimension functions."""
+
+    def test_correlation_integral(self):
+        embedded = np.random.randn(50, 3)
+        c = correlation_integral(embedded, r=1.0)
+        assert 0 <= c <= 1
+
+    def test_information_dimension(self):
+        np.random.seed(42)
+        signal = np.random.randn(500)
+        d1 = information_dimension(signal)
+        assert isinstance(d1, float)
+
+
+class TestDomain:
+    """Tests for domain functions."""
+
+    def test_basin_stability(self):
+        np.random.seed(42)
+        signal = np.random.randn(100)
+        result = basin_stability(signal)
+        assert 'basin_stability' in result
+        assert 0 <= result['basin_stability'] <= 1
+
+    def test_cycle_counting(self):
+        t = np.linspace(0, 4 * np.pi, 200)
+        signal = np.sin(t)
+        result = cycle_counting(signal)
+        assert result['n_cycles'] > 0
+
+    def test_time_constant(self):
+        signal = np.exp(-np.arange(100) / 20.0)
+        result = time_constant(signal)
+        assert 'tau' in result

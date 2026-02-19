@@ -16,3 +16,4 @@ from pmtvs_topology import *
 from pmtvs_network import *
 from pmtvs_information import *
 from pmtvs_tests import *
+from pmtvs_regression import *

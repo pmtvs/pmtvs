@@ -64,6 +64,29 @@ from pmtvs_statistics.calculus import (
     rate_of_change,
 )
 
+from pmtvs_statistics.derivatives import (
+    first_derivative,
+    second_derivative,
+    gradient,
+    laplacian,
+    finite_difference,
+    velocity,
+    acceleration,
+    jerk,
+    smoothed_derivative,
+)
+
+from pmtvs_statistics.normalization import (
+    zscore_normalize,
+    robust_normalize,
+    mad_normalize,
+    minmax_normalize,
+    quantile_normalize,
+    inverse_normalize,
+    normalize,
+    recommend_method,
+)
+
 __all__ = [
     "__version__",
     "BACKEND",
@@ -86,4 +109,23 @@ __all__ = [
     "integral",
     "curvature",
     "rate_of_change",
+    # Derivatives
+    "first_derivative",
+    "second_derivative",
+    "gradient",
+    "laplacian",
+    "finite_difference",
+    "velocity",
+    "acceleration",
+    "jerk",
+    "smoothed_derivative",
+    # Normalization
+    "zscore_normalize",
+    "robust_normalize",
+    "mad_normalize",
+    "minmax_normalize",
+    "quantile_normalize",
+    "inverse_normalize",
+    "normalize",
+    "recommend_method",
 ]
