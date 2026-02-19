@@ -37,7 +37,7 @@ fn partial_autocorrelation<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, 
 
     if n < max_lag + 2 {
         let result = vec![f64::NAN; max_lag + 1];
-        return Ok(PyArray1::from_vec(py, result));
+        return Ok(PyArray1::from_vec_bound(py, result));
     }
 
     // Compute autocorrelations
@@ -88,7 +88,7 @@ fn partial_autocorrelation<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, 
         pacf[k] = phi[k][k];
     }
 
-    Ok(PyArray1::from_vec(py, pacf))
+    Ok(PyArray1::from_vec_bound(py, pacf))
 }
 
 /// Compute Pearson correlation coefficient.

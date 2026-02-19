@@ -93,6 +93,10 @@ maturin develop --release
 pytest tests/ -v
 ```
 
+## Reporting Issues
+
+The most useful bug report includes three things: a minimal code example that reproduces the problem, the value pmtvs returned, and the value you expected with a source (published paper, competing library, or analytical solution). "sample_entropy returns 2.14 but Richman-Moorman Table 2 gives 2.09 for this test vector" is a perfect bug report. We will investigate every well-sourced discrepancy. Edge cases are especially welcome — constant signals, very short signals, NaN-heavy data, extreme outliers. If you can break it, we want to know.
+
 ## License
 
 MIT License. Copyright (c) 2025 pmtvs contributors.

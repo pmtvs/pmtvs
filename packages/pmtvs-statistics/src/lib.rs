@@ -13,7 +13,8 @@ fn mean(py: Python<'_>, signal: PyReadonlyArray1<f64>) -> PyResult<f64> {
 
 /// Compute standard deviation.
 #[pyfunction]
-fn std(py: Python<'_>, signal: PyReadonlyArray1<f64>, ddof: usize) -> PyResult<f64> {
+#[pyo3(name = "std")]
+fn std_dev(py: Python<'_>, signal: PyReadonlyArray1<f64>, ddof: usize) -> PyResult<f64> {
     let signal: Vec<f64> = signal.as_array().iter().filter(|x| x.is_finite()).copied().collect();
     let n = signal.len();
     if n < ddof + 1 {
@@ -160,7 +161,7 @@ fn derivative<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> P
     let n = signal.len();
 
     if n < 2 {
-        return Ok(PyArray1::from_vec(py, vec![f64::NAN]));
+        return Ok(PyArray1::from_vec_bound(py, vec![f64::NAN]));
     }
 
     let mut result = Vec::with_capacity(n - 1);
@@ -168,7 +169,7 @@ fn derivative<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> P
         result.push((signal[i + 1] - signal[i]) / dt);
     }
 
-    Ok(PyArray1::from_vec(py, result))
+    Ok(PyArray1::from_vec_bound(py, result))
 }
 
 /// Compute integral (trapezoidal).
@@ -178,7 +179,7 @@ fn integral<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> PyR
     let n = signal.len();
 
     if n < 2 {
-        return Ok(PyArray1::from_vec(py, vec![0.0]));
+        return Ok(PyArray1::from_vec_bound(py, vec![0.0]));
     }
 
     let mut result = vec![0.0; n];
@@ -186,7 +187,7 @@ fn integral<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> PyR
         result[i] = result[i - 1] + 0.5 * (signal[i] + signal[i - 1]) * dt;
     }
 
-    Ok(PyArray1::from_vec(py, result))
+    Ok(PyArray1::from_vec_bound(py, result))
 }
 
 /// Compute curvature.
@@ -196,7 +197,7 @@ fn curvature<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> Py
     let n = signal.len();
 
     if n < 3 {
-        return Ok(PyArray1::from_vec(py, vec![f64::NAN]));
+        return Ok(PyArray1::from_vec_bound(py, vec![f64::NAN]));
     }
 
     let mut dy = vec![0.0; n];
@@ -221,7 +222,7 @@ fn curvature<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>, dt: f64) -> Py
         .map(|(&dy_i, &d2y_i)| d2y_i.abs() / (1.0 + dy_i * dy_i).powf(1.5))
         .collect();
 
-    Ok(PyArray1::from_vec(py, result))
+    Ok(PyArray1::from_vec_bound(py, result))
 }
 
 /// Compute rate of change.
@@ -231,7 +232,7 @@ fn rate_of_change<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>) -> PyResu
     let n = signal.len();
 
     if n < 2 {
-        return Ok(PyArray1::from_vec(py, vec![f64::NAN]));
+        return Ok(PyArray1::from_vec_bound(py, vec![f64::NAN]));
     }
 
     let mut result = Vec::with_capacity(n - 1);
@@ -243,13 +244,13 @@ fn rate_of_change<'py>(py: Python<'py>, signal: PyReadonlyArray1<f64>) -> PyResu
         }
     }
 
-    Ok(PyArray1::from_vec(py, result))
+    Ok(PyArray1::from_vec_bound(py, result))
 }
 
 #[pymodule]
 fn _rust(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(mean, m)?)?;
-    m.add_function(wrap_pyfunction!(std, m)?)?;
+    m.add_function(wrap_pyfunction!(std_dev, m)?)?;
     m.add_function(wrap_pyfunction!(variance, m)?)?;
     m.add_function(wrap_pyfunction!(min_max, m)?)?;
     m.add_function(wrap_pyfunction!(rms, m)?)?;
