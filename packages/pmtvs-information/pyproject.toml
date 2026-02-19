@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmtvs-information"
-version = "0.1.0"
+version = "0.2.0"
 description = "Information theory primitives"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "PolyForm-Noncommercial-1.0.0"}
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.20", "scipy>=1.7"]

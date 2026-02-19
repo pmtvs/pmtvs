@@ -4,7 +4,7 @@ pmtvs-dynamics — Dynamical systems analysis primitives.
 numpy in, number/array out.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 BACKEND = "python"
 
 # --- Public API ---

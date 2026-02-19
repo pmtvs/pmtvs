@@ -4,26 +4,26 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmtvs"
-version = "0.1.0"
+version = "0.2.0"
 description = "Rust-accelerated signal analysis primitives"
-license = { text = "MIT" }
+license = {text = "PolyForm-Noncommercial-1.0.0"}
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = [
-    "pmtvs-entropy>=0.1.0",
-    "pmtvs-fractal>=0.1.0",
-    "pmtvs-statistics>=0.1.0",
-    "pmtvs-correlation>=0.1.0",
-    "pmtvs-distance>=0.1.0",
-    "pmtvs-embedding>=0.1.0",
-    "pmtvs-dynamics>=0.1.0",
-    "pmtvs-spectral>=0.1.0",
-    "pmtvs-matrix>=0.1.0",
-    "pmtvs-topology>=0.1.0",
-    "pmtvs-network>=0.1.0",
-    "pmtvs-information>=0.1.0",
-    "pmtvs-tests>=0.1.0",
-    "pmtvs-regression>=0.1.0",
+    "pmtvs-entropy>=0.2.0",
+    "pmtvs-fractal>=0.2.0",
+    "pmtvs-statistics>=0.2.0",
+    "pmtvs-correlation>=0.2.0",
+    "pmtvs-distance>=0.2.0",
+    "pmtvs-embedding>=0.2.0",
+    "pmtvs-dynamics>=0.2.0",
+    "pmtvs-spectral>=0.2.0",
+    "pmtvs-matrix>=0.2.0",
+    "pmtvs-topology>=0.2.0",
+    "pmtvs-network>=0.2.0",
+    "pmtvs-information>=0.2.0",
+    "pmtvs-tests>=0.2.0",
+    "pmtvs-regression>=0.2.0",
 ]
 
 [tool.setuptools.packages.find]

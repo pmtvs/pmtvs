@@ -4,9 +4,9 @@ build-backend = "maturin"
 
 [project]
 name = "pmtvs-entropy"
-version = "0.1.0"
+version = "0.2.0"
 description = "Entropy primitives: sample entropy, permutation entropy"
-license = { text = "MIT" }
+license = {text = "PolyForm-Noncommercial-1.0.0"}
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.21"]

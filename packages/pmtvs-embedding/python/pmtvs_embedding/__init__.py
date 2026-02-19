@@ -7,7 +7,7 @@ import os
 
 from pmtvs_embedding._dispatch import RUST_VALIDATED
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 _RUST_AVAILABLE = False
 _RUST_DISABLED = os.environ.get("PMTVS_USE_RUST", "1") == "0"
