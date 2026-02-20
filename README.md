@@ -80,7 +80,7 @@ export PMTVS_USE_RUST=0
 ## Development
 
 ```bash
-git clone https://github.com/rudder-framework/pmtvs.git
+git clone https://github.com/pmtvs/pmtvs.git
 cd pmtvs
 pip install -e packages/pmtvs
 
