@@ -115,3 +115,78 @@ def phase_coupling(signal1, signal2) -> float:
     phase_diff = phase1 - phase2
     plv = float(np.abs(np.mean(np.exp(1j * phase_diff))))
     return plv
+
+
+def information_flow(
+    source: np.ndarray,
+    target: np.ndarray,
+    k: int = 1,
+    n_bins: int = 16
+) -> float:
+    """
+    Compute net information flow from source to target.
+
+    Combines transfer entropy in both directions to estimate the
+    net directional information transfer.
+
+    Parameters
+    ----------
+    source : np.ndarray
+        Source signal
+    target : np.ndarray
+        Target signal
+    k : int
+        Lag for transfer entropy estimation
+    n_bins : int
+        Number of bins for histogram estimation
+
+    Returns
+    -------
+    float
+        Net information flow (positive = source -> target dominant)
+    """
+    source = np.asarray(source, dtype=np.float64).flatten()
+    target = np.asarray(target, dtype=np.float64).flatten()
+    n = min(len(source), len(target))
+    source, target = source[:n], target[:n]
+    mask = ~(np.isnan(source) | np.isnan(target))
+    source, target = source[mask], target[mask]
+    n = len(source)
+
+    if n < k + 10:
+        return np.nan
+
+    def _transfer_entropy(x, y, lag, bins):
+        """TE from x to y: how much does x's past reduce uncertainty in y's future."""
+        y_future = y[lag:]
+        y_past = y[:n - lag]
+        x_past = x[:n - lag]
+
+        # H(y_future | y_past) - H(y_future | y_past, x_past)
+        # Using histogram-based estimation
+        h_yz, _ = np.histogramdd(
+            np.column_stack([y_future, y_past]),
+            bins=bins
+        )
+        h_yxz, _ = np.histogramdd(
+            np.column_stack([y_future, y_past, x_past]),
+            bins=bins
+        )
+        h_z, _ = np.histogram(y_past, bins=bins)
+        h_xz, _ = np.histogramdd(
+            np.column_stack([y_past, x_past]),
+            bins=bins
+        )
+
+        def _entropy(counts):
+            p = counts.flatten() / counts.sum()
+            p = p[p > 0]
+            return -np.sum(p * np.log(p))
+
+        te = _entropy(h_yz) - _entropy(h_yxz) - _entropy(h_z) + _entropy(h_xz)
+        return max(0.0, te)
+
+    te_s2t = _transfer_entropy(source, target, k, n_bins)
+    te_t2s = _transfer_entropy(target, source, k, n_bins)
+
+    return float(te_s2t - te_t2s)

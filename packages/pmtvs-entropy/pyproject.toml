@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pmtvs-entropy"
-version = "0.2.0"
+version = "0.3.1"
 description = "Entropy primitives: sample entropy, permutation entropy"
 license = {text = "PolyForm-Strict-1.0.0"}
 authors = [{name = "pmtvs contributors"}]

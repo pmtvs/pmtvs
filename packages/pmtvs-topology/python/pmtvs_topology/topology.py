@@ -264,3 +264,46 @@ def bottleneck_distance(
 
     # Bottleneck is max difference
     return float(max(abs(a - b) / 2 for a, b in zip(pers1, pers2)))
+
+
+def wasserstein_distance(
+    persistence1: List[Tuple[float, float]],
+    persistence2: List[Tuple[float, float]],
+    p: int = 1
+) -> float:
+    """
+    Compute p-Wasserstein distance between persistence diagrams.
+
+    Parameters
+    ----------
+    persistence1 : list
+        First persistence diagram as (birth, death) pairs
+    persistence2 : list
+        Second persistence diagram as (birth, death) pairs
+    p : int
+        Order of the Wasserstein distance (default: 1)
+
+    Returns
+    -------
+    float
+        Wasserstein distance
+    """
+    # Filter finite pairs
+    p1 = [(b, d) for b, d in persistence1 if np.isfinite(d)]
+    p2 = [(b, d) for b, d in persistence2 if np.isfinite(d)]
+
+    if len(p1) == 0 and len(p2) == 0:
+        return 0.0
+
+    # Persistence values sorted descending
+    pers1 = sorted([d - b for b, d in p1], reverse=True)
+    pers2 = sorted([d - b for b, d in p2], reverse=True)
+
+    # Pad shorter list with zeros (diagonal matches)
+    max_len = max(len(pers1), len(pers2))
+    pers1.extend([0] * (max_len - len(pers1)))
+    pers2.extend([0] * (max_len - len(pers2)))
+
+    # p-Wasserstein: (sum |a_i - b_i|^p)^(1/p)
+    cost = sum(abs(a - b) ** p for a, b in zip(pers1, pers2))
+    return float(cost ** (1.0 / p))

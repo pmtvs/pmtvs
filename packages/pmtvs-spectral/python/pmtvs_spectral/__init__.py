@@ -4,7 +4,7 @@ pmtvs-spectral — Spectral analysis primitives.
 numpy in, array/number out.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 BACKEND = "python"
 
 from pmtvs_spectral.spectral import (
@@ -17,6 +17,12 @@ from pmtvs_spectral.spectral import (
     spectral_flatness,
     harmonic_ratio,
     total_harmonic_distortion,
+    fft_magnitude,
+    hilbert_transform,
+    envelope,
+    instantaneous_frequency,
+    instantaneous_amplitude,
+    instantaneous_phase,
 )
 
 __all__ = [
@@ -31,4 +37,10 @@ __all__ = [
     "spectral_flatness",
     "harmonic_ratio",
     "total_harmonic_distortion",
+    "fft_magnitude",
+    "hilbert_transform",
+    "envelope",
+    "instantaneous_frequency",
+    "instantaneous_amplitude",
+    "instantaneous_phase",
 ]

@@ -304,3 +304,55 @@ def false_nearest_neighbors(
             break
 
     return fnn_arr, optimal_dim
+
+
+def multivariate_embedding(
+    signals: np.ndarray,
+    dim: int = 3,
+    tau: int = 1
+) -> np.ndarray:
+    """
+    Construct multivariate time-delay embedding from multiple signals.
+
+    Each signal contributes delay coordinates to the joint embedding space.
+
+    Parameters
+    ----------
+    signals : np.ndarray
+        Input signals, shape (n_signals, n_samples) or (n_samples, n_signals)
+        If 2D and n_cols > n_rows, assumes (n_signals, n_samples)
+    dim : int
+        Embedding dimension per signal
+    tau : int
+        Time delay
+
+    Returns
+    -------
+    np.ndarray
+        Joint embedding matrix of shape (n_vectors, n_signals * dim)
+    """
+    signals = np.asarray(signals, dtype=np.float64)
+
+    if signals.ndim == 1:
+        return delay_embedding(signals, dim, tau)
+
+    # Ensure shape is (n_signals, n_samples)
+    if signals.shape[0] > signals.shape[1]:
+        signals = signals.T
+
+    n_signals, n_samples = signals.shape
+    n_vectors = n_samples - (dim - 1) * tau
+
+    if n_vectors < 1:
+        return np.array([[np.nan]])
+
+    embeddings = []
+    for sig in signals:
+        emb = delay_embedding(sig, dim, tau)
+        if emb.shape[0] < n_vectors:
+            n_vectors = emb.shape[0]
+        embeddings.append(emb)
+
+    # Truncate all to same length and concatenate
+    joint = np.hstack([emb[:n_vectors] for emb in embeddings])
+    return joint

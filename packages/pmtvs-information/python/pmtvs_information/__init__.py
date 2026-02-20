@@ -2,7 +2,7 @@
 pmtvs-information — Information theory primitives.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 BACKEND = "python"
 
 from pmtvs_information.information import (
@@ -46,6 +46,7 @@ from pmtvs_information.causality import (
     granger_causality,
     convergent_cross_mapping,
     phase_coupling,
+    information_flow,
 )
 
 __all__ = [
@@ -82,4 +83,5 @@ __all__ = [
     "granger_causality",
     "convergent_cross_mapping",
     "phase_coupling",
+    "information_flow",
 ]

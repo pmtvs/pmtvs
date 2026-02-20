@@ -383,3 +383,158 @@ def total_harmonic_distortion(
             harmonic_power_sum += psd[h_idx]
 
     return float(np.sqrt(harmonic_power_sum) / np.sqrt(fundamental_power))
+
+
+def fft_magnitude(
+    signal: np.ndarray,
+    fs: float = 1.0
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Compute FFT magnitude spectrum.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal
+    fs : float
+        Sampling frequency
+
+    Returns
+    -------
+    tuple
+        (frequencies, magnitudes)
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n == 0:
+        return np.array([]), np.array([])
+
+    fft_vals = np.fft.rfft(signal)
+    magnitudes = np.abs(fft_vals) * 2.0 / n
+    freqs = np.fft.rfftfreq(n, 1.0 / fs)
+
+    return freqs, magnitudes
+
+
+def hilbert_transform(
+    signal: np.ndarray
+) -> np.ndarray:
+    """
+    Compute the analytic signal using the Hilbert transform.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input real-valued signal
+
+    Returns
+    -------
+    np.ndarray
+        Complex analytic signal
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n == 0:
+        return np.array([], dtype=np.complex128)
+
+    # FFT-based Hilbert transform
+    fft_vals = np.fft.fft(signal)
+    h = np.zeros(n)
+    if n > 0:
+        h[0] = 1
+        if n % 2 == 0:
+            h[n // 2] = 1
+            h[1:n // 2] = 2
+        else:
+            h[1:(n + 1) // 2] = 2
+
+    analytic = np.fft.ifft(fft_vals * h)
+    return analytic
+
+
+def envelope(
+    signal: np.ndarray
+) -> np.ndarray:
+    """
+    Compute signal envelope (amplitude modulation) via Hilbert transform.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal
+
+    Returns
+    -------
+    np.ndarray
+        Envelope (instantaneous amplitude)
+    """
+    analytic = hilbert_transform(signal)
+    return np.abs(analytic)
+
+
+def instantaneous_frequency(
+    signal: np.ndarray,
+    fs: float = 1.0
+) -> np.ndarray:
+    """
+    Compute instantaneous frequency via Hilbert transform.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal
+    fs : float
+        Sampling frequency
+
+    Returns
+    -------
+    np.ndarray
+        Instantaneous frequency at each sample
+    """
+    analytic = hilbert_transform(signal)
+    phase = np.unwrap(np.angle(analytic))
+    inst_freq = np.diff(phase) / (2.0 * np.pi) * fs
+    return inst_freq
+
+
+def instantaneous_amplitude(
+    signal: np.ndarray
+) -> np.ndarray:
+    """
+    Compute instantaneous amplitude via Hilbert transform.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal
+
+    Returns
+    -------
+    np.ndarray
+        Instantaneous amplitude
+    """
+    return envelope(signal)
+
+
+def instantaneous_phase(
+    signal: np.ndarray
+) -> np.ndarray:
+    """
+    Compute instantaneous phase via Hilbert transform.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal
+
+    Returns
+    -------
+    np.ndarray
+        Instantaneous phase (unwrapped, in radians)
+    """
+    analytic = hilbert_transform(signal)
+    return np.unwrap(np.angle(analytic))

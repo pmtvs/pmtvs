@@ -2,13 +2,14 @@
 pmtvs-network — Network analysis primitives.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 BACKEND = "python"
 
 from pmtvs_network.network import (
     degree_centrality,
     betweenness_centrality,
     closeness_centrality,
+    eigenvector_centrality,
     clustering_coefficient,
     average_path_length,
     density,
@@ -27,6 +28,7 @@ __all__ = [
     "degree_centrality",
     "betweenness_centrality",
     "closeness_centrality",
+    "eigenvector_centrality",
     "clustering_coefficient",
     "average_path_length",
     "density",

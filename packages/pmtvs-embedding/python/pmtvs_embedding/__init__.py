@@ -7,7 +7,7 @@ import os
 
 from pmtvs_embedding._dispatch import RUST_VALIDATED
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 
 _RUST_AVAILABLE = False
 _RUST_DISABLED = os.environ.get("PMTVS_USE_RUST", "1") == "0"
@@ -46,6 +46,7 @@ from pmtvs_embedding.embedding import (
     optimal_embedding_dimension,
     mutual_information_delay,
     false_nearest_neighbors,
+    multivariate_embedding,
 )
 
 __all__ = [
@@ -55,4 +56,5 @@ __all__ = [
     "optimal_embedding_dimension",
     "mutual_information_delay",
     "false_nearest_neighbors",
+    "multivariate_embedding",
 ]

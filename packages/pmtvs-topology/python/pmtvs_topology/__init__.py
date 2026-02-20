@@ -2,7 +2,7 @@
 pmtvs-topology — Topological data analysis primitives.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 BACKEND = "python"
 
 from pmtvs_topology.topology import (
@@ -12,6 +12,7 @@ from pmtvs_topology.topology import (
     persistence_entropy,
     persistence_landscape,
     bottleneck_distance,
+    wasserstein_distance,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "persistence_entropy",
     "persistence_landscape",
     "bottleneck_distance",
+    "wasserstein_distance",
 ]

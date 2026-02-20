@@ -7,7 +7,7 @@ import os
 
 from pmtvs_entropy._dispatch import RUST_VALIDATED
 
-__version__ = "0.2.0"
+__version__ = "0.3.1"
 
 _RUST_AVAILABLE = False
 _RUST_DISABLED = os.environ.get("PMTVS_USE_RUST", "1") == "0"
@@ -45,6 +45,9 @@ from pmtvs_entropy.core import (
     sample_entropy,
     permutation_entropy,
     approximate_entropy,
+    multiscale_entropy,
+    lempel_ziv_complexity,
+    entropy_rate,
 )
 
 __all__ = [
@@ -53,4 +56,7 @@ __all__ = [
     "sample_entropy",
     "permutation_entropy",
     "approximate_entropy",
+    "multiscale_entropy",
+    "lempel_ziv_complexity",
+    "entropy_rate",
 ]

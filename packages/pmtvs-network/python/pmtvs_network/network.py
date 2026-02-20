@@ -131,6 +131,53 @@ def closeness_centrality(adjacency: np.ndarray) -> np.ndarray:
     return cc
 
 
+def eigenvector_centrality(
+    adjacency: np.ndarray,
+    max_iter: int = 100,
+    tol: float = 1e-6
+) -> np.ndarray:
+    """
+    Compute eigenvector centrality.
+
+    Nodes connected to high-scoring nodes receive higher scores.
+
+    Parameters
+    ----------
+    adjacency : np.ndarray
+        Adjacency matrix
+    max_iter : int
+        Maximum power iterations
+    tol : float
+        Convergence tolerance
+
+    Returns
+    -------
+    np.ndarray
+        Eigenvector centrality values
+    """
+    adjacency = np.asarray(adjacency, dtype=np.float64)
+    n = len(adjacency)
+
+    if n == 0:
+        return np.array([])
+    if n == 1:
+        return np.array([1.0])
+
+    # Power iteration
+    x = np.ones(n) / n
+    for _ in range(max_iter):
+        x_new = adjacency @ x
+        norm = np.linalg.norm(x_new)
+        if norm == 0:
+            return np.zeros(n)
+        x_new = x_new / norm
+        if np.linalg.norm(x_new - x) < tol:
+            break
+        x = x_new
+
+    return x_new
+
+
 def clustering_coefficient(adjacency: np.ndarray) -> np.ndarray:
     """
     Compute local clustering coefficient for each node.
