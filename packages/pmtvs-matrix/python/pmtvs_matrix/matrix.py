@@ -123,10 +123,18 @@ def condition_number(matrix: np.ndarray) -> float:
     Returns
     -------
     float
-        Condition number (ratio of largest to smallest singular value)
+        Condition number (ratio of largest to smallest singular value).
+        Clamped to a finite maximum to prevent inf/NaN propagation
+        when the matrix is numerically singular.
     """
     matrix = np.asarray(matrix)
-    return float(np.linalg.cond(matrix))
+    _, s, _ = np.linalg.svd(matrix, full_matrices=False)
+    if len(s) == 0 or s[0] == 0:
+        return 1.0
+    # Clamp smallest singular value to eps * largest to prevent inf
+    eps = np.finfo(float).eps
+    s_min = max(s[-1], eps * s[0])
+    return float(s[0] / s_min)
 
 
 def effective_rank(matrix: np.ndarray) -> float:

@@ -286,7 +286,8 @@ def lyapunov_rosenstein(
     dimension: int = None,
     delay: int = None,
     min_tsep: int = None,
-    max_iter: int = None
+    max_iter: int = None,
+    dt: float = 1.0,
 ) -> Tuple[float, np.ndarray, np.ndarray]:
     """
     Estimate largest Lyapunov exponent using Rosenstein's algorithm.
@@ -303,6 +304,10 @@ def lyapunov_rosenstein(
         Minimum temporal separation for neighbors.
     max_iter : int, optional
         Maximum number of iterations.
+    dt : float
+        Time step between samples. Default 1.0 (canonical index).
+        Result is the Lyapunov exponent per unit of dt.
+        For canonical index (dt=1.0), result is per-sample-step.
 
     Returns
     -------
@@ -364,7 +369,9 @@ def lyapunov_rosenstein(
 
     iterations = np.arange(max_iter)
 
-    fit_end = max(10, max_iter // 5)
+    # Adaptive fit region: detect where divergence curve saturates
+    fit_end = _find_linear_region(divergence, max_iter)
+
     fit_mask = np.isfinite(divergence[:fit_end])
     if np.sum(fit_mask) < 3:
         return np.nan, divergence, iterations
@@ -373,7 +380,7 @@ def lyapunov_rosenstein(
     y = divergence[:fit_end][fit_mask]
     slope, _ = np.polyfit(x, y, 1)
 
-    return float(slope / delay), divergence, iterations
+    return float(slope / (delay * dt)), divergence, iterations
 
 
 def lyapunov_kantz(
@@ -382,7 +389,8 @@ def lyapunov_kantz(
     delay: int = None,
     min_tsep: int = None,
     epsilon: float = None,
-    max_iter: int = None
+    max_iter: int = None,
+    dt: float = 1.0,
 ) -> Tuple[float, np.ndarray]:
     """
     Estimate largest Lyapunov exponent using Kantz's algorithm.
@@ -401,6 +409,9 @@ def lyapunov_kantz(
         Neighborhood radius.
     max_iter : int, optional
         Maximum iterations.
+    dt : float
+        Time step between samples. Default 1.0 (canonical index).
+        Result is the Lyapunov exponent per unit of dt.
 
     Returns
     -------
@@ -471,8 +482,11 @@ def lyapunov_kantz(
     divergence[valid] = divergence[valid] / counts[valid]
     divergence[~valid] = np.nan
 
-    fit_end = max(10, max_iter // 5)
     iterations = np.arange(max_iter)
+
+    # Adaptive fit region: detect where divergence curve saturates
+    fit_end = _find_linear_region(divergence, max_iter)
+
     fit_mask = np.isfinite(divergence[:fit_end])
     if np.sum(fit_mask) < 3:
         return np.nan, divergence
@@ -481,7 +495,7 @@ def lyapunov_kantz(
     y = divergence[:fit_end][fit_mask]
     slope, _ = np.polyfit(x, y, 1)
 
-    return float(slope / delay), divergence
+    return float(slope / (delay * dt)), divergence
 
 
 def estimate_embedding_dim_cao(
@@ -799,10 +813,60 @@ def _auto_delay_acf(signal: np.ndarray) -> int:
 
 
 def _auto_dim_simple(signal: np.ndarray, delay: int) -> int:
-    """Simple auto-detect of embedding dimension."""
+    """Auto-detect embedding dimension via Cao's method.
+
+    Falls back to dim=3 if signal is too short or Cao's method
+    doesn't converge.
+    """
     n = len(signal)
-    for dim in range(2, min(11, n // (3 * delay))):
-        n_pts = n - (dim - 1) * delay
-        if n_pts < 50:
-            return max(2, dim - 1)
-    return 3
+    # Need enough points for Cao's method to be meaningful
+    min_needed = 10 * delay + 50
+    if n < min_needed:
+        return 3
+
+    try:
+        result = estimate_embedding_dim_cao(signal, max_dim=10, tau=delay)
+        dim = result['optimal_dim']
+        # Sanity: must leave enough points for Lyapunov tracking
+        max_feasible = max(2, (n - 50) // (3 * delay))
+        return int(np.clip(dim, 2, min(10, max_feasible)))
+    except Exception:
+        return 3
+
+
+def _find_linear_region(divergence: np.ndarray, max_iter: int) -> int:
+    """Find the end of the linear growth region in a divergence curve.
+
+    Detects where the per-step slope drops below 30% of the initial
+    slope, indicating saturation. Falls back to max_iter // 5.
+    """
+    deriv = np.diff(divergence)
+    valid_deriv = np.isfinite(deriv)
+
+    n_init = min(10, max_iter // 2)
+    init_derivs = deriv[:n_init][valid_deriv[:n_init]]
+
+    if len(init_derivs) >= 2:
+        init_slope = float(np.median(init_derivs))
+    else:
+        return max(10, max_iter // 5)
+
+    if init_slope <= 0:
+        return max(10, max_iter // 5)
+
+    # Find where smoothed slope drops below 30% of initial
+    threshold = 0.3 * init_slope
+    smooth_w = max(3, max_iter // 50)
+    sat_idx = max_iter // 2  # default: first half
+
+    for k in range(smooth_w, max_iter - 1):
+        w_start = max(0, k - smooth_w)
+        w_derivs = deriv[w_start:k + 1]
+        w_valid = valid_deriv[w_start:k + 1]
+        if np.any(w_valid):
+            local_slope = float(np.nanmedian(w_derivs[w_valid]))
+            if local_slope < threshold:
+                sat_idx = k
+                break
+
+    return max(10, sat_idx)

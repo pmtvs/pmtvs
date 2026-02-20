@@ -32,7 +32,7 @@ print(sample_entropy(signal))       # ~2.19
 print(permutation_entropy(signal))  # ~2.57
 
 # Fractal
-print(hurst_exponent, signal))      # ~0.50
+print(hurst_exponent(signal))       # ~0.50
 print(dfa(signal))                  # ~0.50
 
 # Statistics

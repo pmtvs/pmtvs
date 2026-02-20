@@ -283,6 +283,103 @@ class TestNewLyapunov:
         lam, div, iters = lyapunov_rosenstein(x)
         assert isinstance(lam, float)
 
+    def test_lyapunov_rosenstein_logistic_chaotic(self):
+        """Logistic map r=3.9: known lambda = ln(3.9 * |1-2x*|) ≈ 0.496."""
+        np.random.seed(42)
+        n = 5000
+        x = np.zeros(n)
+        x[0] = 0.1
+        for i in range(1, n):
+            x[i] = 3.9 * x[i-1] * (1 - x[i-1])
+        lam, _, _ = lyapunov_rosenstein(x)
+        # Known lambda ≈ 0.496; accept 0.25-0.75
+        assert 0.25 < lam < 0.75, f"Logistic r=3.9 lambda={lam:.3f}, expected ~0.496"
+
+    def test_lyapunov_rosenstein_sine_stable(self):
+        """Sine wave is quasiperiodic: lambda should be <= 0 (no chaos)."""
+        t = np.linspace(0, 100, 5000)
+        sine = np.sin(t)
+        lam, _, _ = lyapunov_rosenstein(sine)
+        assert lam <= 0.05, f"Sine wave lambda={lam:.4f}, should be <= 0 (stable)"
+
+    def test_lyapunov_rosenstein_chaotic_beats_stable(self):
+        """Chaotic system must have strictly higher lambda than stable one."""
+        np.random.seed(42)
+        # Chaotic: logistic r=3.9
+        x_chaos = np.zeros(3000)
+        x_chaos[0] = 0.1
+        for i in range(1, 3000):
+            x_chaos[i] = 3.9 * x_chaos[i-1] * (1 - x_chaos[i-1])
+        lam_chaos, _, _ = lyapunov_rosenstein(x_chaos)
+
+        # Stable: logistic r=2.0 (converges to fixed point)
+        x_stable = np.zeros(3000)
+        x_stable[0] = 0.1
+        for i in range(1, 3000):
+            x_stable[i] = 2.0 * x_stable[i-1] * (1 - x_stable[i-1])
+        lam_stable, _, _ = lyapunov_rosenstein(x_stable)
+
+        assert lam_chaos > lam_stable, (
+            f"Chaotic lambda ({lam_chaos:.3f}) should exceed "
+            f"stable lambda ({lam_stable:.3f})"
+        )
+
+    def test_lyapunov_rosenstein_dt_halves_exponent(self):
+        """dt=0.5 means each step covers half the time: exponent doubles."""
+        np.random.seed(42)
+        n = 3000
+        x = np.zeros(n)
+        x[0] = 0.1
+        for i in range(1, n):
+            x[i] = 3.9 * x[i-1] * (1 - x[i-1])
+        lam1, _, _ = lyapunov_rosenstein(x, dt=1.0)
+        lam2, _, _ = lyapunov_rosenstein(x, dt=0.5)
+        # dt=0.5 → exponent should be 2× the dt=1.0 value
+        assert abs(lam2 / lam1 - 2.0) < 0.01, (
+            f"dt=0.5 should give 2x: got {lam2:.4f} / {lam1:.4f} = {lam2/lam1:.2f}"
+        )
+
+    def test_lyapunov_rosenstein_henon_chaotic(self):
+        """Henon map (a=1.4, b=0.3): known lambda ≈ 0.42.
+
+        Discrete 2D map, nothing like Rossler. Proves auto-detection
+        is domain-agnostic, not tuned to any specific system.
+        """
+        np.random.seed(42)
+        n = 5000
+        x = np.zeros(n)
+        x[0] = 0.1
+        y = 0.0
+        for i in range(1, n):
+            x_new = 1.0 - 1.4 * x[i-1]**2 + y
+            y = 0.3 * x[i-1]
+            x[i] = x_new
+        lam, _, _ = lyapunov_rosenstein(x)
+        # Known lambda ≈ 0.42; accept 0.2-0.7
+        assert 0.2 < lam < 0.7, (
+            f"Henon lambda={lam:.3f}, expected ~0.42 — "
+            f"auto-detection should work for discrete maps too"
+        )
+
+    def test_lyapunov_rosenstein_edge_of_chaos(self):
+        """Logistic map r=3.57 (onset of chaos): lambda ≈ 0.
+
+        At the edge of chaos, lambda hovers near zero. This is harder
+        to detect than deep chaos — proves the method isn't just
+        returning 'positive' for everything.
+        """
+        np.random.seed(42)
+        n = 5000
+        x = np.zeros(n)
+        x[0] = 0.1
+        for i in range(1, n):
+            x[i] = 3.57 * x[i-1] * (1 - x[i-1])
+        lam, _, _ = lyapunov_rosenstein(x)
+        # Edge of chaos: lambda should be near zero
+        assert abs(lam) < 0.15, (
+            f"Edge-of-chaos lambda={lam:.4f}, should be near 0"
+        )
+
     def test_lyapunov_kantz(self):
         np.random.seed(42)
         signal = np.random.randn(200)

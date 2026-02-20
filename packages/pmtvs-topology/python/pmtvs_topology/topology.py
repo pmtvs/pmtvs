@@ -227,6 +227,194 @@ def persistence_landscape(
     return x, np.array(landscapes)
 
 
+def persistent_homology_1d(
+    points: np.ndarray,
+    max_edge_length: float = None,
+    max_points: int = 200,
+) -> List[Tuple[float, float]]:
+    """
+    Compute 1-dimensional persistent homology (loops/cycles).
+
+    Uses Vietoris-Rips filtration with simplices up to dimension 2.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Point cloud (n_points, n_dims). Must be at least 2D.
+    max_edge_length : float, optional
+        Maximum edge length in the Rips complex. Auto-detected if None
+        using the 30th percentile of pairwise distances.
+    max_points : int
+        Maximum points before subsampling (default 200).
+
+    Returns
+    -------
+    list
+        List of (birth, death) tuples for H1 features (loops).
+        Birth = filtration scale where loop appears.
+        Death = scale where loop is filled by a triangle (np.inf if never).
+    """
+    points = np.asarray(points)
+    if points.ndim == 1:
+        points = points.reshape(-1, 1)
+
+    n = len(points)
+    if n < 3:
+        return []
+
+    # Subsample if too many points
+    if n > max_points:
+        idx = np.random.choice(n, max_points, replace=False)
+        points = points[idx]
+        n = max_points
+
+    dist = distance_matrix(points)
+
+    # Auto-detect max_edge_length
+    if max_edge_length is None:
+        upper_tri = dist[np.triu_indices(n, k=1)]
+        max_edge_length = float(np.percentile(upper_tri, 30))
+
+    # Build sorted edges within threshold
+    edges = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            if dist[i, j] <= max_edge_length:
+                edges.append((dist[i, j], i, j))
+    edges.sort()
+
+    if not edges:
+        return []
+
+    # Map edge pair -> index in sorted edge list
+    edge_to_idx = {}
+    for idx, (d, i, j) in enumerate(edges):
+        edge_to_idx[(i, j)] = idx
+
+    # Union-Find to identify cycle-creating edges (H1 births)
+    parent = list(range(n))
+    uf_rank = [0] * n
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    def union(x, y):
+        px, py = find(x), find(y)
+        if px == py:
+            return False
+        if uf_rank[px] < uf_rank[py]:
+            px, py = py, px
+        parent[py] = px
+        if uf_rank[px] == uf_rank[py]:
+            uf_rank[px] += 1
+        return True
+
+    cycle_edge_indices = set()
+    h1_births = {}
+
+    for idx, (d, i, j) in enumerate(edges):
+        if not union(i, j):
+            # Both endpoints already connected -> creates a 1-cycle
+            cycle_edge_indices.add(idx)
+            h1_births[idx] = d
+
+    if not cycle_edge_indices:
+        return []
+
+    # Build triangles within threshold, sorted by max edge length
+    triangles = []
+    # Build adjacency for fast triangle enumeration
+    adj = [set() for _ in range(n)]
+    for d, i, j in edges:
+        adj[i].add(j)
+        adj[j].add(i)
+
+    for i in range(n):
+        for j in adj[i]:
+            if j <= i:
+                continue
+            for k in adj[i]:
+                if k <= j:
+                    continue
+                if k in adj[j]:
+                    filt_val = max(dist[i, j], dist[i, k], dist[j, k])
+                    triangles.append((filt_val, i, j, k))
+    triangles.sort()
+
+    # Persistence reduction: triangles kill H1 features
+    killed = set()
+    reduced_columns = {}  # pivot_edge_idx -> reduced boundary chain
+    persistence_pairs = []
+
+    for filt_val, i, j, k in triangles:
+        # Boundary of triangle (i,j,k) in Z/2 = {(i,j), (i,k), (j,k)}
+        boundary = set()
+        for a, b in [(i, j), (i, k), (j, k)]:
+            key = (min(a, b), max(a, b))
+            if key in edge_to_idx:
+                edge_idx = edge_to_idx[key]
+                boundary.symmetric_difference_update({edge_idx})
+
+        # Column reduction against previously stored columns
+        while boundary:
+            pivot = max(boundary)
+            if pivot in reduced_columns:
+                boundary = boundary.symmetric_difference(reduced_columns[pivot])
+            else:
+                break
+
+        if boundary:
+            pivot = max(boundary)
+            reduced_columns[pivot] = boundary
+            # If pivot is a cycle-creating edge, this triangle kills that H1 feature
+            if pivot in cycle_edge_indices and pivot not in killed:
+                killed.add(pivot)
+                persistence_pairs.append((h1_births[pivot], filt_val))
+
+    # Features never killed persist to infinity
+    for idx in cycle_edge_indices:
+        if idx not in killed:
+            persistence_pairs.append((h1_births[idx], np.inf))
+
+    persistence_pairs.sort()
+    return persistence_pairs
+
+
+def persistent_homology(
+    points: np.ndarray,
+    max_edge_length: float = None,
+    max_points: int = 200,
+) -> dict:
+    """
+    Compute persistent homology in dimensions 0 and 1.
+
+    Convenience wrapper that returns both H0 (connected components)
+    and H1 (loops) persistence diagrams.
+
+    Parameters
+    ----------
+    points : np.ndarray
+        Point cloud (n_points, n_dims).
+    max_edge_length : float, optional
+        Maximum edge length for H1 Rips filtration.
+    max_points : int
+        Maximum points before subsampling for H1.
+
+    Returns
+    -------
+    dict
+        {'h0': [(birth, death), ...], 'h1': [(birth, death), ...]}
+    """
+    h0 = persistent_homology_0d(points)
+    h1 = persistent_homology_1d(
+        points, max_edge_length=max_edge_length, max_points=max_points
+    )
+    return {'h0': h0, 'h1': h1}
+
+
 def bottleneck_distance(
     persistence1: List[Tuple[float, float]],
     persistence2: List[Tuple[float, float]]

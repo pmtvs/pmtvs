@@ -8,6 +8,8 @@ BACKEND = "python"
 from pmtvs_topology.topology import (
     distance_matrix,
     persistent_homology_0d,
+    persistent_homology_1d,
+    persistent_homology,
     betti_numbers,
     persistence_entropy,
     persistence_landscape,
@@ -20,6 +22,8 @@ __all__ = [
     "BACKEND",
     "distance_matrix",
     "persistent_homology_0d",
+    "persistent_homology_1d",
+    "persistent_homology",
     "betti_numbers",
     "persistence_entropy",
     "persistence_landscape",

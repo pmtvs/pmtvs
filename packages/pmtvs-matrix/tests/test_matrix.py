@@ -93,6 +93,35 @@ class TestConditionNumber:
         A = np.array([[1, 1], [1, 1.0001]])
         assert condition_number(A) > 1000
 
+    def test_near_singular_clamped_not_inf(self):
+        """Near-singular matrix: clamped finite, not inf. Must exceed true ratio."""
+        np.random.seed(42)
+        data = np.random.randn(100, 5)
+        data[:, 1:] *= 1e-10  # ratio ~ 1e10
+        cn = condition_number(data)
+        assert np.isfinite(cn), "Condition number must be finite after clamping"
+        assert cn > 1e8, f"Expected > 1e8 for 1e-10 scaling, got {cn:.2e}"
+
+    def test_known_diagonal_condition_number(self):
+        """Diagonal matrix: condition number = max(|diag|) / min(|diag|)."""
+        A = np.diag([10.0, 5.0, 1.0])
+        cn = condition_number(A)
+        assert cn == pytest.approx(10.0, rel=0.01), f"diag([10,5,1]) should have CN=10, got {cn}"
+
+    def test_condition_number_scales_with_perturbation(self):
+        """Progressively singular matrices should have increasing condition numbers."""
+        cn_values = []
+        for scale in [1.0, 0.01, 1e-6]:
+            A = np.diag([1.0, scale])
+            cn_values.append(condition_number(A))
+        # Each should be larger than the previous
+        assert cn_values[1] > cn_values[0], "CN should grow as matrix becomes more singular"
+        assert cn_values[2] > cn_values[1], "CN should grow as matrix becomes more singular"
+        # Known values: 1/1=1, 1/0.01=100, 1/1e-6=1e6
+        assert cn_values[0] == pytest.approx(1.0)
+        assert cn_values[1] == pytest.approx(100.0, rel=0.01)
+        assert cn_values[2] == pytest.approx(1e6, rel=0.01)
+
 
 class TestEffectiveRank:
     def test_identity(self):
