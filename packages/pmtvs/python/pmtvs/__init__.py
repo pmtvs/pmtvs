@@ -1,6 +1,6 @@
 """pmtvs — all signal analysis primitives in one import."""
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 # Re-export everything from sub-packages
 from pmtvs_entropy import *

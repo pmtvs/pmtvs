@@ -7,7 +7,7 @@ import os
 
 from pmtvs_entropy._dispatch import RUST_VALIDATED
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 _RUST_AVAILABLE = False
 _RUST_DISABLED = os.environ.get("PMTVS_USE_RUST", "1") == "0"

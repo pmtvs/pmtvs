@@ -2,7 +2,7 @@
 pmtvs-network — Network analysis primitives.
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 BACKEND = "python"
 
 from pmtvs_network.network import (

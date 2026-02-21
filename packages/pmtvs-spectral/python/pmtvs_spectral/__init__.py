@@ -4,7 +4,7 @@ pmtvs-spectral — Spectral analysis primitives.
 numpy in, array/number out.
 """
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 BACKEND = "python"
 
 from pmtvs_spectral.spectral import (

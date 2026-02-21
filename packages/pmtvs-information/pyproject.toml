@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmtvs-information"
-version = "0.3.1"
+version = "0.3.2"
 description = "Information theory primitives"
 readme = "README.md"
 license = {text = "PolyForm-Strict-1.0.0"}
