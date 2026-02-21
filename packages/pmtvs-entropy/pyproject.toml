@@ -7,6 +7,7 @@ name = "pmtvs-entropy"
 version = "0.3.2"
 description = "Entropy primitives: sample entropy, permutation entropy"
 license = {text = "PolyForm-Strict-1.0.0"}
+license-files = []
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.21"]

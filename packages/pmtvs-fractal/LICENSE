@@ -127,30 +127,27 @@ License 1.0.0 above and are binding on all users of this software.
 
    a) Individual Academic Use — FREE
 
-      Students (undergraduate, graduate, postdoctoral), individual
-      researchers, and educators may use this software at no cost
-      for personal research, coursework, thesis work, and teaching,
-      provided no grant or external funding exceeding $100,000 USD
-      (or equivalent) directly supports the work in which this
-      software is used. Citation is required per Section 1.
+      Students, individual researchers, and educators may use
+      this software at no cost for:
+      - Personal research and experimentation
+      - Coursework and thesis work
+      - Teaching and classroom instruction
+      - Student assignments and projects
 
-   b) Funded Research Use — ACADEMIC RESEARCH LICENSE REQUIRED
-
-      Use of this software in research supported by grant funding,
-      contracts, or institutional funding exceeding $100,000 USD
-      (or equivalent) from any source — including but not limited
-      to federal agencies (NIH, NSF, DOE, DOD, NASA), state agencies,
-      private foundations, or industry sponsors — requires a paid
-      Academic Research License.
-
-      Contact: licensing@pmtvs.dev
+      This applies to individuals installing and running the
+      software on their own machines or personal accounts.
 
       Citation is required per Section 1.
 
-   c) University or Institutional Site License
+   b) Institutional Deployment — LICENSE REQUIRED
 
-      Departments or institutions seeking unlimited use across
-      multiple researchers and labs may purchase a Site License.
+      Deployment of this software on institutional
+      infrastructure — including but not limited to university
+      servers, shared computing clusters, learning management
+      systems, JupyterHub instances, course platforms, or any
+      centrally managed environment serving multiple users —
+      requires an Institutional License regardless of whether
+      the institution is for-profit or non-profit.
 
       Contact: licensing@pmtvs.dev
 

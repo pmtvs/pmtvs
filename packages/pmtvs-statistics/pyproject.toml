@@ -7,6 +7,7 @@ name = "pmtvs-statistics"
 version = "0.3.2"
 description = "Signal statistics and calculus primitives"
 license = {text = "PolyForm-Strict-1.0.0"}
+license-files = []
 authors = [{name = "pmtvs contributors"}]
 requires-python = ">=3.9"
 dependencies = ["numpy>=1.21"]
