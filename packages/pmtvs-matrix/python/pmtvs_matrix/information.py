@@ -45,6 +45,9 @@ def mutual_information_matrix(
     """
     signals = np.asarray(signals)
 
+    if signals.size == 0:
+        return np.array([]).reshape(0, 0)
+
     if signals.ndim == 1:
         signals = signals.reshape(-1, 1)
 

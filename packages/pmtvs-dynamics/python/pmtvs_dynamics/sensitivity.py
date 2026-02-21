@@ -140,6 +140,13 @@ def compute_sensitivity_evolution(
         mean_sensitivity, sensitivity_std, dominant_variable, sensitivity_entropy.
     """
     sensitivity = np.asarray(sensitivity)
+    if sensitivity.ndim < 2:
+        return {
+            'mean_sensitivity': np.array([]),
+            'sensitivity_std': np.array([]),
+            'dominant_variable': np.array([]),
+            'sensitivity_entropy': np.array([]),
+        }
     n_points, dim = sensitivity.shape
 
     mean_sens = np.full((n_points, dim), np.nan)

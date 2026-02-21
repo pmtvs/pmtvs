@@ -61,6 +61,8 @@ def eigendecomposition(matrix: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         (eigenvalues, eigenvectors) sorted by eigenvalue magnitude
     """
     matrix = np.asarray(matrix)
+    if matrix.ndim < 2:
+        return np.array([]), np.empty((0, 0))
     eigenvalues, eigenvectors = np.linalg.eig(matrix)
 
     # Sort by magnitude
@@ -88,6 +90,8 @@ def svd_decomposition(
         (U, singular_values, Vh)
     """
     matrix = np.asarray(matrix)
+    if matrix.ndim < 2:
+        return np.empty((0, 0)), np.array([]), np.empty((0, 0))
     return np.linalg.svd(matrix, full_matrices=full_matrices)
 
 
@@ -128,6 +132,8 @@ def condition_number(matrix: np.ndarray) -> float:
         when the matrix is numerically singular.
     """
     matrix = np.asarray(matrix)
+    if matrix.ndim < 2:
+        return np.nan
     _, s, _ = np.linalg.svd(matrix, full_matrices=False)
     if len(s) == 0 or s[0] == 0:
         return 1.0
@@ -152,6 +158,8 @@ def effective_rank(matrix: np.ndarray) -> float:
         Effective rank
     """
     matrix = np.asarray(matrix)
+    if matrix.ndim < 2:
+        return 0.0
     _, s, _ = np.linalg.svd(matrix, full_matrices=False)
 
     s = s[s > 0]
@@ -188,6 +196,8 @@ def graph_laplacian(
         Laplacian matrix
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.array([])
     degree = np.sum(adjacency, axis=1)
     D = np.diag(degree)
     L = D - adjacency

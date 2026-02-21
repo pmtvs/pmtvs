@@ -21,6 +21,8 @@ def degree_centrality(adjacency: np.ndarray) -> np.ndarray:
         Degree centrality values (normalized)
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.array([np.nan])
     n = len(adjacency)
     if n <= 1:
         return np.array([1.0] * n)
@@ -44,6 +46,8 @@ def betweenness_centrality(adjacency: np.ndarray) -> np.ndarray:
         Betweenness centrality values
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.array([np.nan])
     n = len(adjacency)
     bc = np.zeros(n)
 
@@ -105,6 +109,8 @@ def closeness_centrality(adjacency: np.ndarray) -> np.ndarray:
         Closeness centrality values
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.array([np.nan])
     n = len(adjacency)
     cc = np.zeros(n)
 
@@ -156,6 +162,8 @@ def eigenvector_centrality(
         Eigenvector centrality values
     """
     adjacency = np.asarray(adjacency, dtype=np.float64)
+    if adjacency.ndim < 2:
+        return np.array([np.nan])
     n = len(adjacency)
 
     if n == 0:
@@ -193,6 +201,8 @@ def clustering_coefficient(adjacency: np.ndarray) -> np.ndarray:
         Clustering coefficients
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.array([np.nan])
     adjacency = (adjacency > 0).astype(float)  # Binarize
     n = len(adjacency)
     cc = np.zeros(n)
@@ -232,6 +242,8 @@ def average_path_length(adjacency: np.ndarray) -> float:
         Average path length (inf if disconnected)
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return np.nan
     n = len(adjacency)
 
     if n <= 1:
@@ -306,6 +318,8 @@ def connected_components(adjacency: np.ndarray) -> List[List[int]]:
         List of components (each is list of node indices)
     """
     adjacency = np.asarray(adjacency)
+    if adjacency.ndim < 2:
+        return []
     n = len(adjacency)
     visited = [False] * n
     components = []
@@ -353,6 +367,8 @@ def adjacency_from_correlation(
         Binary adjacency matrix
     """
     corr = np.asarray(correlation_matrix)
+    if corr.ndim < 2:
+        return np.array([])
     adj = (np.abs(corr) >= threshold).astype(int)
     np.fill_diagonal(adj, 0)
     return adj

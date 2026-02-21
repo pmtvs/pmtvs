@@ -37,6 +37,9 @@ def power_spectral_density(
     signal = signal[~np.isnan(signal)]
     n = len(signal)
 
+    if n < 2:
+        return np.array([]), np.array([])
+
     if n < nperseg:
         nperseg = n
 

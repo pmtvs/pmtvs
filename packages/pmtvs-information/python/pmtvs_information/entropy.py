@@ -4,7 +4,7 @@ import numpy as np
 
 def _estimate_probabilities(data, bins=None):
     data = np.asarray(data, dtype=np.float64).flatten()
-    data = data[~np.isnan(data)]
+    data = data[np.isfinite(data)]
     if len(data) < 2:
         return np.array([])
     if bins is None:

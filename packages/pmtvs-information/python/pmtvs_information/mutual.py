@@ -22,6 +22,8 @@ def conditional_mutual_information(x, y, z, bins=None, base=2):
     y = np.asarray(y, dtype=np.float64).flatten()
     z = np.asarray(z, dtype=np.float64).flatten()
     n = min(len(x), len(y), len(z))
+    if n < 2:
+        return np.nan
     x, y, z = x[:n], y[:n], z[:n]
     if bins is None:
         bins = max(8, int(n ** (1/3)))
@@ -39,7 +41,11 @@ def conditional_mutual_information(x, y, z, bins=None, base=2):
 def multivariate_mutual_information(variables, bins=None, base=2):
     """Co-information for 3+ variables."""
     variables = [np.asarray(v, dtype=np.float64).flatten() for v in variables]
+    if len(variables) < 2:
+        return np.nan
     n = min(len(v) for v in variables)
+    if n < 2:
+        return np.nan
     variables = [v[:n] for v in variables]
     if bins is None:
         bins = max(8, int(n ** (1/3)))
@@ -63,7 +69,11 @@ def multivariate_mutual_information(variables, bins=None, base=2):
 def total_correlation(variables, bins=None, base=2):
     """TC = sum(H(Xi)) - H(X1,...,Xn)."""
     variables = [np.asarray(v, dtype=np.float64).flatten() for v in variables]
+    if len(variables) < 2:
+        return np.nan
     n = min(len(v) for v in variables)
+    if n < 2:
+        return np.nan
     variables = [v[:n] for v in variables]
     if bins is None:
         bins = max(8, int(n ** (1/3)))
@@ -84,7 +94,11 @@ def interaction_information(variables, bins=None, base=2):
 def dual_total_correlation(variables, bins=None, base=2):
     """DTC = H(X1,...,Xn) - sum(H(Xi|X_{-i}))."""
     variables = [np.asarray(v, dtype=np.float64).flatten() for v in variables]
+    if len(variables) < 2:
+        return np.nan
     n = min(len(v) for v in variables)
+    if n < 2:
+        return np.nan
     variables = [v[:n] for v in variables]
     if bins is None:
         bins = max(8, int(n ** (1/3)))

@@ -108,7 +108,9 @@ def alignment_metric(
     eigenvals = np.abs(np.asarray(eigenvalues, dtype=np.float64))
     eigenvals = eigenvals[eigenvals > 1e-12]
 
-    if len(eigenvals) <= 1:
+    if len(eigenvals) == 0:
+        return np.nan
+    if len(eigenvals) == 1:
         return 1.0
 
     probs = eigenvals / np.sum(eigenvals)
@@ -183,6 +185,8 @@ def matrix_entropy(
         Matrix entropy.
     """
     matrix = np.asarray(matrix, dtype=np.float64)
+    if matrix.ndim < 2 or matrix.shape[0] != matrix.shape[1]:
+        return np.nan
     eigenvals = np.abs(eigvals(matrix))
     eigenvals = eigenvals[eigenvals > 1e-12]
 

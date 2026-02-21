@@ -151,6 +151,9 @@ def detect_saddle_points(
         trajectory = trajectory.reshape(-1, 1)
     n_points, dim = trajectory.shape
 
+    if n_points < 2:
+        return np.zeros(max(n_points, 0)), np.full(max(n_points, 0), np.nan), []
+
     if n_neighbors is None:
         n_neighbors = 2 * dim + 1
 

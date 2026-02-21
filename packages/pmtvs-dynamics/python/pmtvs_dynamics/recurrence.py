@@ -80,6 +80,8 @@ def recurrence_rate(R: np.ndarray) -> float:
         Recurrence rate in [0, 1]
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return np.nan
     n = len(R)
 
     if n < 2:
@@ -110,6 +112,8 @@ def determinism(R: np.ndarray, min_line_length: int = 2) -> float:
         Determinism in [0, 1]
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return np.nan
     n = len(R)
 
     if n < min_line_length:
@@ -157,6 +161,8 @@ def laminarity(R: np.ndarray, min_line_length: int = 2) -> float:
         Laminarity in [0, 1]
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return np.nan
     n = len(R)
 
     if n < min_line_length:
@@ -197,6 +203,8 @@ def trapping_time(R: np.ndarray, min_line_length: int = 2) -> float:
         Average trapping time
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return np.nan
     n = len(R)
 
     if n < min_line_length:
@@ -235,6 +243,8 @@ def entropy_recurrence(R: np.ndarray, min_line_length: int = 2) -> float:
         Shannon entropy of line length distribution
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return np.nan
     n = len(R)
 
     if n < min_line_length:
@@ -320,6 +330,8 @@ def max_diagonal_line(R: np.ndarray, min_line: int = 2) -> int:
         Maximum diagonal line length.
     """
     R = np.asarray(R)
+    if R.ndim < 2:
+        return 0
     n = len(R)
 
     if n < min_line:

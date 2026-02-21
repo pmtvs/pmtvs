@@ -281,6 +281,7 @@ def smoothed_derivative(
     from scipy.signal import savgol_filter
 
     values = np.asarray(values, dtype=np.float64).flatten()
+    values = values[~np.isnan(values)]
 
     if window % 2 == 0:
         window += 1

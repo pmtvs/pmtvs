@@ -97,6 +97,10 @@ def stability_index(
     if trajectory.ndim == 1:
         trajectory = trajectory.reshape(-1, 1)
 
+    # Filter out non-finite values
+    finite_mask = np.all(np.isfinite(trajectory), axis=1)
+    trajectory = trajectory[finite_mask]
+
     n_points = len(trajectory)
 
     if n_points < 10:
@@ -107,7 +111,7 @@ def stability_index(
     distances = np.linalg.norm(trajectory - centroid, axis=1)
 
     if np.all(distances < 1e-10):
-        return -np.inf  # Fixed point
+        return np.nan  # Constant/fixed point — degenerate input
 
     # Fit exponential decay/growth
     # distance(t) ~ exp(lambda * t)

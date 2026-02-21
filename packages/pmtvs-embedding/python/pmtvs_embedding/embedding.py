@@ -164,7 +164,7 @@ def mutual_information_delay(
         Optimal time delay
     """
     signal = np.asarray(signal).flatten()
-    signal = signal[~np.isnan(signal)]
+    signal = signal[np.isfinite(signal)]
     n = len(signal)
 
     if n < max_lag + 10:

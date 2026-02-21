@@ -61,6 +61,10 @@ def dynamic_mode_decomposition(
     if signals.ndim == 1:
         signals = signals.reshape(-1, 1)
 
+    # Filter non-finite values (rows with any inf/nan)
+    finite_mask = np.all(np.isfinite(signals), axis=1)
+    signals = signals[finite_mask]
+
     n_samples, n_signals = signals.shape
 
     if n_samples < 3:

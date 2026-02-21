@@ -105,6 +105,8 @@ def community_detection(
     Label propagation: Fast, non-deterministic.
     """
     adjacency = np.asarray(adjacency, dtype=np.float64)
+    if adjacency.ndim < 2:
+        return np.array([0]), 0.0
     n = adjacency.shape[0]
 
     if n == 0:

@@ -145,6 +145,8 @@ def minmax_normalize(
         (normalized_data, params_dict)
     """
     values = np.asarray(values, dtype=np.float64)
+    if values.size == 0:
+        return values.copy(), {'method': 'minmax', 'data_min': np.nan, 'data_max': np.nan, 'feature_range': feature_range}
     new_min, new_max = feature_range
     data_min = np.nanmin(values, axis=axis, keepdims=True)
     data_max = np.nanmax(values, axis=axis, keepdims=True)
