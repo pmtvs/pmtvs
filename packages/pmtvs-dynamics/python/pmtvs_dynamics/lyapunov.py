@@ -7,6 +7,7 @@ chaos and predictability in dynamical systems.
 
 import numpy as np
 from typing import Optional, Tuple
+from pmtvs_dynamics._lyapunov_utils import fit_linear_region
 
 
 def ftle(
@@ -176,22 +177,13 @@ def largest_lyapunov_exponent(
     times = np.array([t for t, _ in avg_divergence])
     log_divs = np.array([d for _, d in avg_divergence])
 
-    # Use only linear region (first quarter typically)
-    n_fit = max(5, len(times) // 4)
-    times_fit = times[:n_fit]
-    log_divs_fit = log_divs[:n_fit]
+    if len(log_divs) >= 4:
+        slope, _, _, _ = fit_linear_region(log_divs, times)
+    else:
+        coeffs = np.polyfit(times, log_divs, 1)
+        slope = coeffs[0]
 
-    # Simple linear regression
-    x_mean = np.mean(times_fit)
-    y_mean = np.mean(log_divs_fit)
-
-    num = np.sum((times_fit - x_mean) * (log_divs_fit - y_mean))
-    den = np.sum((times_fit - x_mean) ** 2)
-
-    if den == 0:
-        return np.nan
-
-    return float(num / den)
+    return float(slope)
 
 
 def lyapunov_spectrum(
@@ -376,9 +368,15 @@ def lyapunov_rosenstein(
     if np.sum(fit_mask) < 3:
         return np.nan, divergence, iterations
 
-    x = iterations[:fit_end][fit_mask]
-    y = divergence[:fit_end][fit_mask]
-    slope, _ = np.polyfit(x, y, 1)
+    div_valid = divergence[:fit_end][fit_mask]
+    iter_valid = iterations[:fit_end][fit_mask]
+    if len(div_valid) >= 4:
+        slope, _, _, r2 = fit_linear_region(div_valid, iter_valid)
+        if r2 < 0.5:
+            # Poor linearity — fall back to full-region fit
+            slope, _ = np.polyfit(iter_valid, div_valid, 1)
+    else:
+        slope, _ = np.polyfit(iter_valid, div_valid, 1)
 
     return float(slope / (delay * dt)), divergence, iterations
 
@@ -491,9 +489,15 @@ def lyapunov_kantz(
     if np.sum(fit_mask) < 3:
         return np.nan, divergence
 
-    x = iterations[:fit_end][fit_mask]
-    y = divergence[:fit_end][fit_mask]
-    slope, _ = np.polyfit(x, y, 1)
+    div_valid = divergence[:fit_end][fit_mask]
+    iter_valid = iterations[:fit_end][fit_mask]
+    if len(div_valid) >= 4:
+        slope, _, _, r2 = fit_linear_region(div_valid, iter_valid)
+        if r2 < 0.5:
+            # Poor linearity — fall back to full-region fit
+            slope, _ = np.polyfit(iter_valid, div_valid, 1)
+    else:
+        slope, _ = np.polyfit(iter_valid, div_valid, 1)
 
     return float(slope / (delay * dt)), divergence
 
