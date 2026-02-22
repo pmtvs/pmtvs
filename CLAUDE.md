@@ -6,7 +6,7 @@
 
 **numpy in, number out.**
 
-244 total functions. 21 with validated Rust acceleration.
+241 total functions. 27 with validated Rust acceleration.
 
 ## Repository Structure
 
