@@ -31,6 +31,7 @@ from pmtvs_matrix.dmd import (
     dynamic_mode_decomposition,
     dmd_frequencies,
     dmd_growth_rates,
+    dmd_decompose,
 )
 
 from pmtvs_matrix.information import (
@@ -64,6 +65,7 @@ __all__ = [
     "dynamic_mode_decomposition",
     "dmd_frequencies",
     "dmd_growth_rates",
+    "dmd_decompose",
     # information.py
     "mutual_information_matrix",
     "transfer_entropy_matrix",

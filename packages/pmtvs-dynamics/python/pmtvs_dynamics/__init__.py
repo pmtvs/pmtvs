@@ -76,6 +76,10 @@ from pmtvs_dynamics.domain import (
     cycle_counting,
     local_outlier_factor,
     time_constant,
+    transition_analysis,
+    dwell_analysis,
+    garch_fit,
+    hmm_fit,
 )
 
 __all__ = [
@@ -135,4 +139,8 @@ __all__ = [
     "cycle_counting",
     "local_outlier_factor",
     "time_constant",
+    "transition_analysis",
+    "dwell_analysis",
+    "garch_fit",
+    "hmm_fit",
 ]

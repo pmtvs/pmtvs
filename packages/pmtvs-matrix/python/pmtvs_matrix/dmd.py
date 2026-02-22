@@ -189,3 +189,71 @@ def dmd_growth_rates(
     eigenvalues = np.asarray(eigenvalues)
     omega = np.log(eigenvalues + 1e-10) / dt
     return np.real(omega)
+
+
+def dmd_decompose(y: np.ndarray, delay: int = 10, dt: float = 1.0) -> dict:
+    """
+    DMD summary for a 1D signal via delay embedding.
+
+    Delay-embeds the signal, runs DMD, and extracts summary statistics.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Input signal (1D).
+    delay : int
+        Embedding dimension for delay matrix.
+    dt : float
+        Time step.
+
+    Returns
+    -------
+    dict
+        dominant_freq, growth_rate, is_stable, n_modes.
+    """
+    nan_result = {
+        'dominant_freq': np.nan, 'growth_rate': np.nan,
+        'is_stable': np.nan, 'n_modes': np.nan,
+    }
+
+    y = np.asarray(y, dtype=np.float64).ravel()
+    y = y[np.isfinite(y)]
+    n = len(y)
+
+    if n < delay + 2:
+        return nan_result
+
+    # Build delay-embedded matrix (n_samples x delay)
+    n_rows = n - delay + 1
+    embedded = np.empty((n_rows, delay))
+    for i in range(n_rows):
+        embedded[i, :] = y[i:i + delay]
+
+    try:
+        modes, eigenvalues, dynamics, amplitudes = dynamic_mode_decomposition(
+            embedded, dt=dt
+        )
+    except Exception:
+        return nan_result
+
+    if np.any(np.isnan(eigenvalues)):
+        return nan_result
+
+    freqs = dmd_frequencies(eigenvalues, dt=dt)
+    growth = dmd_growth_rates(eigenvalues, dt=dt)
+
+    # Dominant mode by amplitude
+    amp_mag = np.abs(amplitudes)
+    if len(amp_mag) == 0 or np.all(np.isnan(amp_mag)):
+        return nan_result
+
+    dom_idx = int(np.argmax(amp_mag))
+    dominant_freq = float(freqs[dom_idx])
+    growth_rate = float(growth[dom_idx])
+    is_stable = float(np.all(np.abs(eigenvalues) <= 1.0 + 1e-10))
+    n_modes = int(len(eigenvalues))
+
+    return {
+        'dominant_freq': dominant_freq, 'growth_rate': growth_rate,
+        'is_stable': is_stable, 'n_modes': float(n_modes),
+    }

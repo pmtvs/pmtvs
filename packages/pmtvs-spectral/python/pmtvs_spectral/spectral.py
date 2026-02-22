@@ -541,3 +541,95 @@ def instantaneous_phase(
     """
     analytic = hilbert_transform(signal)
     return np.unwrap(np.angle(analytic))
+
+
+def spectral_slope(
+    signal: np.ndarray,
+    fs: float = 1.0
+) -> float:
+    """
+    Compute spectral slope via log-log linear regression of PSD vs frequency.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal (1D).
+    fs : float
+        Sampling frequency.
+
+    Returns
+    -------
+    float
+        Spectral slope (negative = 1/f-like decay).
+    """
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < 4:
+        return np.nan
+
+    xc = signal - np.mean(signal)
+    fft_vals = np.fft.rfft(xc)
+    psd = np.abs(fft_vals[1:]) ** 2
+    if len(psd) == 0 or np.sum(psd) < 1e-30:
+        return np.nan
+
+    freqs = np.arange(1, len(psd) + 1) * (fs / n)
+    log_f = np.log(freqs + 1e-30)
+    log_p = np.log(psd + 1e-30)
+    slope = float(np.polyfit(log_f, log_p, 1)[0])
+    return slope
+
+
+def signal_to_noise(
+    signal: np.ndarray,
+    kernel_fraction: int = 20
+) -> dict:
+    """
+    Estimate signal-to-noise ratio via moving-average separation.
+
+    Parameters
+    ----------
+    signal : np.ndarray
+        Input signal (1D).
+    kernel_fraction : int
+        Denominator for kernel size (kernel = n // kernel_fraction).
+
+    Returns
+    -------
+    dict
+        db, linear, signal_power, noise_power.
+    """
+    nan_result = {
+        'db': np.nan, 'linear': np.nan,
+        'signal_power': np.nan, 'noise_power': np.nan,
+    }
+
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
+    n = len(signal)
+
+    if n < 10:
+        return nan_result
+
+    k = max(n // kernel_fraction, 3)
+    kernel = np.ones(k) / k
+    signal_est = np.convolve(signal, kernel, mode='same')
+    noise = signal - signal_est
+    sig_power = float(np.mean(signal_est ** 2))
+    noise_power = float(np.mean(noise ** 2))
+
+    if noise_power < 1e-30:
+        return {
+            'db': 100.0, 'linear': 1e10,
+            'signal_power': sig_power, 'noise_power': noise_power,
+        }
+
+    linear = sig_power / noise_power
+    db = float(10 * np.log10(linear))
+
+    return {
+        'db': db, 'linear': linear,
+        'signal_power': sig_power, 'noise_power': noise_power,
+    }

@@ -23,6 +23,8 @@ from pmtvs_spectral.spectral import (
     instantaneous_frequency,
     instantaneous_amplitude,
     instantaneous_phase,
+    spectral_slope,
+    signal_to_noise,
 )
 
 __all__ = [
@@ -43,4 +45,6 @@ __all__ = [
     "instantaneous_frequency",
     "instantaneous_amplitude",
     "instantaneous_phase",
+    "spectral_slope",
+    "signal_to_noise",
 ]
