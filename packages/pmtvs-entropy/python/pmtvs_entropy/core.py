@@ -34,17 +34,9 @@ def sample_entropy(
     float
         Sample entropy (higher = more complex/random)
     """
-    # Check for Rust backend
-    if use_rust('sample_entropy'):
-        from pmtvs_entropy import _get_rust
-        rust_fn = _get_rust('sample_entropy')
-        if rust_fn is not None:
-            if r is None:
-                r = 0.2 * np.std(signal)
-            return rust_fn(signal, m, r)
-
-    # Python implementation
-    signal = np.asarray(signal).flatten()
+    # Input normalization and edge guards (before any dispatch)
+    signal = np.asarray(signal, dtype=np.float64).flatten()
+    signal = signal[~np.isnan(signal)]
     n = len(signal)
 
     if r is None:
@@ -52,6 +44,15 @@ def sample_entropy(
 
     if r == 0 or n < m + 2:
         return np.nan
+
+    # Check for Rust backend
+    if use_rust('sample_entropy'):
+        from pmtvs_entropy import _get_rust
+        rust_fn = _get_rust('sample_entropy')
+        if rust_fn is not None:
+            return rust_fn(signal, m, r)
+
+    # Python implementation
 
     def count_matches(dim):
         count = 0

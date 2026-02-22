@@ -42,22 +42,22 @@ print(kurtosis(signal))             # ~3.00
 
 ## What's Inside
 
-244 functions across 14 packages. One flat import.
+241 functions across 14 packages. One flat import.
 
 | Package | Functions | Rust | Description |
 |---------|-----------|------|-------------|
-| pmtvs-entropy | 3 | 2 | Sample entropy, permutation entropy |
+| pmtvs-entropy | 6 | 2 | Sample entropy, permutation entropy |
 | pmtvs-fractal | 7 | 3 | Hurst exponent, DFA, rescaled range |
 | pmtvs-statistics | 38 | 14 | Statistics, calculus, derivatives |
 | pmtvs-correlation | 15 | 4 | Correlation, autocorrelation, Spearman |
 | pmtvs-distance | 6 | 3 | Distance metrics, cosine similarity |
-| pmtvs-embedding | 4 | 1 | Time delay embedding |
+| pmtvs-embedding | 5 | 1 | Time delay embedding |
 | pmtvs-dynamics | 46 | 0 | Lyapunov, FTLE, RQA, sensitivity |
-| pmtvs-spectral | 9 | 0 | FFT, PSD, wavelets |
+| pmtvs-spectral | 15 | 0 | FFT, PSD, wavelets |
 | pmtvs-matrix | 22 | 0 | SVD, covariance, DMD, geometry |
-| pmtvs-topology | 6 | 0 | Persistent homology |
-| pmtvs-network | 10 | 0 | Graph analysis, community detection |
-| pmtvs-information | 25 | 0 | Information theory, causality |
+| pmtvs-topology | 9 | 0 | Persistent homology |
+| pmtvs-network | 11 | 0 | Graph analysis, community detection |
+| pmtvs-information | 29 | 0 | Information theory, causality |
 | pmtvs-tests | 27 | 0 | Statistical & hypothesis tests |
 | pmtvs-regression | 5 | 0 | Linear regression, signal arithmetic |
 
@@ -65,7 +65,7 @@ Full mathematical reference with LaTeX equations: [PRIMITIVES.md](PRIMITIVES.md)
 
 ## Rust Acceleration
 
-21 functions have validated Rust backends (up to 1,441x on sample_entropy). Every Rust function must prove:
+27 functions have validated Rust backends (up to 1,441x on sample_entropy). Every Rust function must prove:
 
 1. **Parity** — matches Python output within tolerance
 2. **Speedup** — actually faster than Python
