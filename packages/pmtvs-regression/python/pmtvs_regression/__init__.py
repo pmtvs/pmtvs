@@ -4,7 +4,7 @@ pmtvs-regression — Pairwise regression primitives.
 numpy in, number/array out.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 BACKEND = "python"
 
 # --- Public API ---

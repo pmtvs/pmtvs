@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pmtvs-distance"
-version = "0.3.2"
+version = "0.3.3"
 description = "Distance metrics for signal comparison (4 functions, 3 Rust-accelerated)"
 readme = "README.md"
 license = {text = "PolyForm-Strict-1.0.0"}

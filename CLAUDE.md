@@ -59,7 +59,7 @@ The umbrella `pmtvs/__init__.py` uses `from pmtvs_xxx import *` for all 14 packa
 - Edge cases: return `np.nan` (not raise) for degenerate inputs (too short, constant, etc.)
 - Docstrings: NumPy-style
 - Every public function must be in `__all__` in `__init__.py`
-- `__version__ = "0.3.2"` and `BACKEND = "python"` (or `"rust"`) in each `__init__.py`
+- `__version__ = "0.3.3"` and `BACKEND = "python"` (or `"rust"`) in each `__init__.py`
 
 ## Rust Acceleration
 

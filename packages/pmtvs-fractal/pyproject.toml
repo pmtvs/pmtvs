@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pmtvs-fractal"
-version = "0.3.2"
+version = "0.3.3"
 description = "Fractal primitives: Hurst exponent, DFA"
 license = {text = "PolyForm-Strict-1.0.0"}
 license-files = []

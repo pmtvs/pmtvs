@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmtvs-regression"
-version = "0.3.2"
+version = "0.3.3"
 description = "Pairwise regression primitives (5 functions, pure Python)"
 readme = "README.md"
 license = {text = "PolyForm-Strict-1.0.0"}

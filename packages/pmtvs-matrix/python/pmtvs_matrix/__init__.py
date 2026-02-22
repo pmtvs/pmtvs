@@ -2,7 +2,7 @@
 pmtvs-matrix — Matrix analysis primitives.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 BACKEND = "python"
 
 from pmtvs_matrix.matrix import (

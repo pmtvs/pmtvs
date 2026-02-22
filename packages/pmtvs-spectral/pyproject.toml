@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pmtvs-spectral"
-version = "0.3.2"
+version = "0.3.3"
 description = "Spectral analysis primitives (pure Python)"
 readme = "README.md"
 license = {text = "PolyForm-Strict-1.0.0"}

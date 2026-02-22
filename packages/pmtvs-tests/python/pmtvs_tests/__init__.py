@@ -2,7 +2,7 @@
 pmtvs-tests — Statistical hypothesis testing primitives.
 """
 
-__version__ = "0.3.2"
+__version__ = "0.3.3"
 BACKEND = "python"
 
 from pmtvs_tests.tests import (
